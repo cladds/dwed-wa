@@ -6,13 +6,33 @@ import { createClient } from "@/lib/supabase/client";
 import { signOut } from "@/lib/auth";
 import type { User } from "@supabase/supabase-js";
 
+const RANK_LABELS: Record<string, string> = {
+  recruit: "Recruit",
+  investigator: "Investigator",
+  senior_investigator: "Sr. Investigator",
+  analyst: "Analyst",
+  lead_investigator: "Lead Investigator",
+  director: "Director",
+};
+
 export function Header() {
   const [user, setUser] = useState<User | null>(null);
+  const [rank, setRank] = useState<string>("recruit");
   const [supabase] = useState(() => createClient());
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user);
+      if (user) {
+        supabase
+          .from("operatives")
+          .select("rank")
+          .eq("discord_id", user.user_metadata.provider_id ?? user.id)
+          .single()
+          .then(({ data }) => {
+            if (data?.rank) setRank(data.rank);
+          });
+      }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -42,7 +62,7 @@ export function Header() {
                   {user.user_metadata.full_name ?? "CMDR"}
                 </p>
                 <p className="font-system text-text-faint text-[9px] tracking-wider uppercase">
-                  Recruit
+                  {RANK_LABELS[rank] ?? rank}
                 </p>
               </div>
             </div>
