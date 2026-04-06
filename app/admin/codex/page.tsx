@@ -11,6 +11,7 @@ interface Source {
 }
 
 const CATEGORIES = [
+  { value: "raxxla", label: "Raxxla" },
   { value: "mystery", label: "Mystery" },
   { value: "lore", label: "Lore" },
   { value: "faction", label: "Faction" },
@@ -25,7 +26,7 @@ export default function AdminCodexPage() {
   const router = useRouter();
 
   const [title, setTitle] = useState("");
-  const [category, setCategory] = useState("mystery");
+  const [category, setCategory] = useState("raxxla");
   const [sources, setSources] = useState<Source[]>([]);
   const [newUrl, setNewUrl] = useState("");
   const [newTitle, setNewTitle] = useState("");
@@ -71,6 +72,7 @@ export default function AdminCodexPage() {
       }
 
       const data = await res.json();
+      if (!title && data.title) setTitle(data.title);
       setGeneratedContent(data.content);
       setGeneratedExcerpt(data.excerpt);
       setGeneratedTags(data.tags);
@@ -122,7 +124,7 @@ export default function AdminCodexPage() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 className="w-full bg-bg-deep border border-border px-4 py-2.5 font-body text-text-primary text-sm focus:border-gold/50 focus:outline-none"
-                placeholder="e.g. What is Raxxla?"
+                placeholder="Leave blank to auto-generate from sources"
               />
             </div>
 
@@ -193,7 +195,7 @@ export default function AdminCodexPage() {
 
           <button
             onClick={generate}
-            disabled={generating || !title || sources.length === 0}
+            disabled={generating || sources.length === 0}
             className="w-full font-ui text-[10px] tracking-[0.15em] uppercase bg-gold/10 border border-gold/30 text-gold px-6 py-3 hover:bg-gold/20 transition-colors cursor-pointer disabled:opacity-50"
           >
             {generating ? "Generating article..." : "Generate from sources"}

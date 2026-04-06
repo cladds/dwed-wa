@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 
 const CATEGORY_LABELS: Record<string, string> = {
+  raxxla: "Raxxla",
   mystery: "Mystery",
   lore: "Lore",
   faction: "Faction",

@@ -6,7 +6,7 @@ create table codex_articles (
   slug            text unique not null,
   content         text not null,            -- markdown content
   excerpt         text,                     -- short description for cards
-  category        text not null check (category in ('mystery', 'lore', 'faction', 'location', 'mechanic', 'history', 'guide')),
+  category        text not null check (category in ('raxxla', 'mystery', 'lore', 'faction', 'location', 'mechanic', 'history', 'guide')),
   cover_image     text,                     -- optional image URL
   sources         jsonb default '[]',       -- array of {url, title, type} source links
   tags            text[] default '{}',

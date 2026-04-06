@@ -23,12 +23,12 @@ export async function POST(request: Request) {
   const body = await request.json();
   const { urls, title, category } = body as {
     urls: Array<{ url: string; title: string; type: string }>;
-    title: string;
+    title?: string;
     category: string;
   };
 
-  if (!urls?.length || !title || !category) {
-    return NextResponse.json({ error: "Missing urls, title, or category" }, { status: 400 });
+  if (!urls?.length || !category) {
+    return NextResponse.json({ error: "Missing urls or category" }, { status: 400 });
   }
 
   // Fetch content from each URL
@@ -81,13 +81,16 @@ Rules:
 - Include specific system names, dates, commander names when available
 - No "it's worth noting", "interestingly", "in conclusion", "let's dive in" or any AI-sounding phrases
 - No bullet points unless listing specific systems or coordinates
-- Write an excerpt (1 sentence, under 150 chars) as the first line, prefixed with EXCERPT:
-- Write suggested tags as the second line, prefixed with TAGS: (comma separated)
+- If the source content is written in roleplay (RP) or in-character style, extract the real investigation intel, systems, and lore references from it and write the article in a factual briefing style instead
+- If the source is a forum thread, focus on the original post and key findings, skip the casual replies
+- First line: TITLE: (suggested article title, max 60 chars)
+- Second line: EXCERPT: (1 sentence summary, under 150 chars)
+- Third line: TAGS: (comma separated tags)
 - Then the full article content`,
       messages: [
         {
           role: "user",
-          content: `Write a codex article titled "${title}" for category "${category}". Use these sources:\n\n${contents.join("\n\n---\n\n")}`,
+          content: `Write a codex article for category "${category}".${title ? ` Suggested title: "${title}".` : " Generate an appropriate title."}\n\nUse these sources:\n\n${contents.join("\n\n---\n\n")}`,
         },
       ],
     }),
@@ -101,29 +104,35 @@ Rules:
   const claudeData = await claudeRes.json();
   const rawContent = claudeData.content?.[0]?.text ?? "";
 
-  // Parse excerpt and tags from the response
+  // Parse title, excerpt, and tags from the response
   const lines = rawContent.split("\n");
+  let generatedTitle = title ?? "";
   let excerpt = "";
   let tags: string[] = [];
   let contentStart = 0;
 
   for (let i = 0; i < lines.length; i++) {
-    if (lines[i].startsWith("EXCERPT:")) {
-      excerpt = lines[i].replace("EXCERPT:", "").trim();
+    const line = lines[i].trim();
+    if (line.startsWith("TITLE:")) {
+      generatedTitle = line.replace("TITLE:", "").trim();
       contentStart = i + 1;
-    } else if (lines[i].startsWith("TAGS:")) {
-      tags = lines[i].replace("TAGS:", "").split(",").map((t: string) => t.trim()).filter(Boolean);
+    } else if (line.startsWith("EXCERPT:")) {
+      excerpt = line.replace("EXCERPT:", "").trim();
       contentStart = i + 1;
-    } else if (lines[i].trim() !== "") {
+    } else if (line.startsWith("TAGS:")) {
+      tags = line.replace("TAGS:", "").split(",").map((t: string) => t.trim()).filter(Boolean);
+      contentStart = i + 1;
+    } else if (line !== "") {
       break;
     }
   }
 
   const content = lines.slice(contentStart).join("\n").trim();
-  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+  const finalTitle = generatedTitle || "Untitled Article";
+  const slug = finalTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
   return NextResponse.json({
-    title,
+    title: finalTitle,
     slug,
     content,
     excerpt,
