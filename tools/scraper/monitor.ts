@@ -95,14 +95,14 @@ async function extractPosts(page: import("playwright").Page, pageNumber: number)
       const contentHtml = bodyEl?.innerHTML ?? "";
       let rawText = "";
       if (bodyEl) {
-        const walk = (node: Node): string => {
-          if (node.nodeType === Node.TEXT_NODE) return node.textContent ?? "";
-          if (node.nodeType !== Node.ELEMENT_NODE) return "";
-          const tag = (node as Element).tagName?.toLowerCase();
+        const walk = function(node) {
+          if (node.nodeType === 3) return node.textContent || "";
+          if (node.nodeType !== 1) return "";
+          const tag = node.tagName ? node.tagName.toLowerCase() : "";
           const blockTags = ["p", "div", "br", "li", "tr", "h1", "h2", "h3", "h4", "h5", "h6", "blockquote", "table"];
           let text = "";
           if (tag === "td" || tag === "th") text += " | ";
-          node.childNodes.forEach(c => { text += walk(c); });
+          node.childNodes.forEach(function(c) { text += walk(c); });
           if (blockTags.includes(tag)) text += "\n";
           return text;
         };

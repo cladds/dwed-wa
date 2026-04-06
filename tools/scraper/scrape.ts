@@ -93,19 +93,18 @@ async function extractPosts(page: Page, pageNumber: number): Promise<ForumPost[]
       // Clean text: normalize whitespace, add spacing around block elements
       let rawText = "";
       if (bodyEl) {
-        // Walk the DOM to add newlines for block elements
-        const walk = (node: Node): string => {
-          if (node.nodeType === Node.TEXT_NODE) {
-            return node.textContent ?? "";
+        const walk = function(node) {
+          if (node.nodeType === 3) { // TEXT_NODE
+            return node.textContent || "";
           }
-          if (node.nodeType !== Node.ELEMENT_NODE) return "";
-          const tag = (node as Element).tagName?.toLowerCase();
+          if (node.nodeType !== 1) return ""; // ELEMENT_NODE
+          const tag = node.tagName ? node.tagName.toLowerCase() : "";
           const blockTags = ["p", "div", "br", "li", "tr", "h1", "h2", "h3", "h4", "h5", "h6", "blockquote", "table"];
           let text = "";
           if (tag === "td" || tag === "th") {
             text += " | ";
           }
-          node.childNodes.forEach(c => { text += walk(c); });
+          node.childNodes.forEach(function(c) { text += walk(c); });
           if (blockTags.includes(tag)) text += "\n";
           return text;
         };
