@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 interface ForumPost {
@@ -42,6 +42,29 @@ export function ArchiveReview({ leads, canManage }: { leads: ExtractedLead[]; ca
   const [items, setItems] = useState(leads);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [supabase] = useState(() => createClient());
+  const [grouping, setGrouping] = useState(false);
+  const [groupResult, setGroupResult] = useState<string | null>(null);
+  const [importedCount, setImportedCount] = useState(0);
+
+  const tryAutoGroup = useCallback(async (newCount: number) => {
+    if (newCount >= 2) {
+      setGrouping(true);
+      setGroupResult(null);
+      try {
+        const res = await fetch("/api/archive/group", { method: "POST" });
+        const data = await res.json();
+        if (res.ok) {
+          setGroupResult(`Grouped ${data.linked} leads into ${data.groups} theories (${data.created} new)`);
+          setImportedCount(0);
+        } else {
+          setGroupResult(data.error ?? "Grouping failed");
+        }
+      } catch {
+        setGroupResult("Grouping request failed");
+      }
+      setGrouping(false);
+    }
+  }, []);
 
   async function updateStatus(id: string, status: "imported" | "dismissed") {
     const { error } = await supabase
@@ -51,6 +74,11 @@ export function ArchiveReview({ leads, canManage }: { leads: ExtractedLead[]; ca
 
     if (!error) {
       setItems((prev) => prev.filter((item) => item.id !== id));
+      if (status === "imported") {
+        const newCount = importedCount + 1;
+        setImportedCount(newCount);
+        tryAutoGroup(newCount);
+      }
     }
   }
 
@@ -66,6 +94,25 @@ export function ArchiveReview({ leads, canManage }: { leads: ExtractedLead[]; ca
 
   return (
     <div className="space-y-3">
+      {(grouping || groupResult) && (
+        <div className={`border px-5 py-3 mb-4 ${grouping ? "border-gold/30 bg-gold/5" : "border-status-success/30 bg-status-success/5"}`}>
+          <p className={`font-system text-xs ${grouping ? "text-gold" : "text-status-success"}`}>
+            {grouping ? "Grouping leads into theories..." : groupResult}
+          </p>
+        </div>
+      )}
+
+      {canManage && (
+        <div className="flex justify-end mb-2">
+          <button
+            onClick={() => tryAutoGroup(2)}
+            disabled={grouping}
+            className="font-ui text-[9px] tracking-[0.15em] uppercase border border-gold/30 text-gold px-4 py-1.5 hover:bg-gold/10 transition-colors cursor-pointer disabled:opacity-50"
+          >
+            {grouping ? "Grouping..." : "Group into Theories"}
+          </button>
+        </div>
+      )}
       {items.map((lead) => (
         <div key={lead.id} className="border border-border bg-bg-card">
           <div className="px-5 py-3 flex items-center justify-between">
