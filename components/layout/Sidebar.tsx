@@ -6,25 +6,25 @@ import Image from "next/image";
 
 const navGroups = [
   {
-    label: "Intelligence",
+    label: "Operations",
     items: [
       { href: "/", label: "Overview", icon: "◆" },
-      { href: "/dossiers", label: "Dossiers", icon: "▣" },
+      { href: "/dossiers", label: "Leads", icon: "▣" },
       { href: "/systems", label: "Coordinates", icon: "◎" },
       { href: "/map", label: "Galaxy Chart", icon: "✦" },
     ],
   },
   {
-    label: "Archives",
+    label: "Reference",
     items: [
       { href: "/codex", label: "The Codex", icon: "▤" },
     ],
   },
   {
-    label: "Operations",
+    label: "Submit",
     items: [
-      { href: "/submit/dossier", label: "New Dossier", icon: "+" },
-      { href: "/submit/system", label: "Submit Coords", icon: "+" },
+      { href: "/submit/dossier", label: "New Lead", icon: "+" },
+      { href: "/submit/system", label: "New Coordinates", icon: "+" },
     ],
   },
 ];
@@ -34,12 +34,17 @@ export function Sidebar() {
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-[240px] bg-bg-card border-r border-border flex flex-col z-40">
-      <div className="px-5 py-4 border-b border-border flex items-center gap-3">
-        <Image src="/logo.svg" alt="DWA" width={28} height={28} />
-        <span className="font-heading text-gold text-sm tracking-[0.15em]">
-          Dark Wheel
-        </span>
-      </div>
+      <Link href="/" className="block px-5 py-4 border-b border-border">
+        <div className="flex items-center gap-3">
+          <Image src="/logo.svg" alt="" width={28} height={28} />
+          <div>
+            <span className="font-heading text-gold text-sm tracking-[0.1em] block leading-tight">
+              darkwheel
+            </span>
+            <span className="font-system text-text-dim text-[9px] tracking-widest">.space</span>
+          </div>
+        </div>
+      </Link>
 
       <nav className="flex-1 overflow-y-auto py-4 px-3">
         {navGroups.map((group) => (
@@ -54,7 +59,7 @@ export function Sidebar() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2 mb-0.5 text-sm transition-colors ${
+                  className={`flex items-center gap-3 px-3 py-2.5 mb-0.5 text-sm transition-all ${
                     isActive
                       ? "bg-gold/10 text-gold border-l-2 border-gold"
                       : "text-text-mid hover:bg-bg-hover hover:text-text-primary border-l-2 border-transparent"
@@ -71,7 +76,7 @@ export function Sidebar() {
 
       <div className="border-t border-border px-4 py-3">
         <p className="font-system text-text-faint text-[9px] tracking-widest uppercase">
-          IRH // Dark Wheel Archives
+          Raxxla Investigation Platform
         </p>
       </div>
     </aside>

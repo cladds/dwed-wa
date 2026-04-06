@@ -27,21 +27,24 @@ export function Header() {
   return (
     <header className="fixed top-0 left-[240px] right-0 h-14 bg-bg-card border-b border-border z-30 flex items-center justify-between px-6">
       <div className="flex items-center gap-4">
-        <h2 className="font-ui text-text-dim text-xs tracking-[0.2em] uppercase">
-          Operations Console
+        <h2 className="font-system text-text-dim text-xs tracking-widest uppercase">
+          Operations Desk
         </h2>
       </div>
 
       <div className="flex items-center gap-4">
         {user ? (
-          <div className="flex items-center gap-3">
-            <div className="text-right">
-              <p className="font-system text-gold text-xs">
-                {user.user_metadata.full_name ?? "CMDR"}
-              </p>
-              <p className="font-system text-text-faint text-[9px] tracking-wider uppercase">
-                Operative
-              </p>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 px-3 py-1.5 bg-bg-hover border border-border">
+              <div className="w-2 h-2 bg-status-success" />
+              <div>
+                <p className="font-system text-gold text-xs leading-tight">
+                  {user.user_metadata.full_name ?? "CMDR"}
+                </p>
+                <p className="font-system text-text-faint text-[9px] tracking-wider uppercase">
+                  Recruit
+                </p>
+              </div>
             </div>
             <button
               onClick={() => signOut()}
@@ -53,7 +56,7 @@ export function Header() {
         ) : (
           <Link
             href="/login"
-            className="font-ui text-text-dim text-[10px] tracking-[0.15em] uppercase border border-border-gold px-4 py-1.5 hover:text-gold hover:border-gold transition-colors"
+            className="font-ui text-text-dim text-[10px] tracking-[0.15em] uppercase border border-gold/30 px-4 py-1.5 hover:text-gold hover:border-gold transition-colors"
           >
             Identify
           </Link>

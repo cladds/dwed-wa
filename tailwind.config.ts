@@ -10,30 +10,31 @@ const config: Config = {
     extend: {
       colors: {
         bg: {
-          deep: "#050302",
-          card: "#040201",
-          hover: "#080602",
+          deep: "var(--bg-deep)",
+          card: "var(--bg-card)",
+          hover: "var(--bg-hover)",
         },
         border: {
-          DEFAULT: "#1a1408",
-          gold: "#c4923a44",
+          DEFAULT: "var(--border)",
+          gold: "var(--border-gold)",
         },
         gold: {
-          DEFAULT: "#c4923a",
-          glow: "#c4923a33",
+          DEFAULT: "var(--gold)",
+          glow: "var(--gold-glow)",
         },
         text: {
-          primary: "#b08040",
-          mid: "#8a6040",
-          dim: "#4a3820",
-          faint: "#3a2810",
+          primary: "var(--text-primary)",
+          mid: "var(--text-mid)",
+          dim: "var(--text-dim)",
+          faint: "var(--text-faint)",
         },
         coord: {
-          blue: "#7dd3e8",
+          blue: "var(--coord-blue)",
         },
         status: {
-          success: "#4a9b6a",
-          danger: "#9b4a4a",
+          success: "var(--success)",
+          danger: "var(--danger)",
+          warning: "var(--warning)",
         },
       },
       fontFamily: {
