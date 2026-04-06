@@ -108,10 +108,10 @@ export default async function Home() {
         </div>
         <div className="flex gap-2">
           <Link
-            href="/submit/dossier"
+            href="/submit/theory"
             className="font-ui text-[10px] tracking-[0.15em] uppercase bg-gold/10 border border-gold/30 text-gold px-4 py-2 hover:bg-gold/20 transition-colors"
           >
-            + New Lead
+            + New Theory
           </Link>
           <Link
             href="/submit/system"

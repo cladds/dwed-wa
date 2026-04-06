@@ -9,7 +9,7 @@ const navGroups = [
     label: "Operations",
     items: [
       { href: "/", label: "Overview", icon: "◆" },
-      { href: "/dossiers", label: "Leads", icon: "▣" },
+      { href: "/theories?source=open", label: "Open Theories", icon: "▣" },
       { href: "/systems", label: "Coordinates", icon: "◎" },
       { href: "/map", label: "Galaxy Chart", icon: "✦" },
     ],
@@ -17,14 +17,20 @@ const navGroups = [
   {
     label: "Reference",
     items: [
+      { href: "/theories?source=forum", label: "Forum Theories", icon: "▦" },
       { href: "/codex", label: "The Codex", icon: "▤" },
-      { href: "/admin/archive", label: "Forum Archive", icon: "▦" },
+    ],
+  },
+  {
+    label: "Admin",
+    items: [
+      { href: "/admin/archive", label: "Forum Archive", icon: "⚙" },
     ],
   },
   {
     label: "Submit",
     items: [
-      { href: "/submit/dossier", label: "New Lead", icon: "+" },
+      { href: "/submit/theory", label: "New Theory", icon: "+" },
       { href: "/submit/system", label: "New Coordinates", icon: "+" },
     ],
   },
@@ -55,7 +61,7 @@ export function Sidebar() {
             </p>
             {group.items.map((item) => {
               const isActive = pathname === item.href ||
-                (item.href !== "/" && pathname.startsWith(item.href));
+                (item.href !== "/" && pathname.startsWith(item.href.split("?")[0]));
               return (
                 <Link
                   key={item.href}

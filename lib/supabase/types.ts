@@ -325,6 +325,60 @@ export interface Database {
         };
         Relationships: [];
       };
+      theories: {
+        Row: {
+          id: string;
+          title: string;
+          slug: string;
+          summary: string;
+          status: "open_lead" | "under_investigation" | "promising" | "verified" | "disproven" | "dead_end";
+          category: "theory" | "system" | "lore" | "mechanic" | "evidence";
+          source: "open" | "forum";
+          systems_mentioned: string[];
+          evidence_count: number;
+          source_post_count: number;
+          created_by: string | null;
+          original_author: string | null;
+          source_url: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          title: string;
+          slug: string;
+          summary: string;
+          category: string;
+          id?: string;
+          status?: string;
+          source?: string;
+          systems_mentioned?: string[];
+          evidence_count?: number;
+          source_post_count?: number;
+          created_by?: string | null;
+          original_author?: string | null;
+          source_url?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          title?: string;
+          slug?: string;
+          summary?: string;
+          category?: string;
+          id?: string;
+          status?: string;
+          source?: string;
+          systems_mentioned?: string[];
+          evidence_count?: number;
+          source_post_count?: number;
+          created_by?: string | null;
+          original_author?: string | null;
+          source_url?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       forum_posts: {
         Row: {
           id: string;
@@ -386,6 +440,7 @@ export interface Database {
           status: "unreviewed" | "imported" | "dismissed";
           original_author: string | null;
           source_url: string | null;
+          theory_id: string | null;
           linked_dossier_id: string | null;
           linked_ticket_id: string | null;
           created_at: string;
@@ -402,6 +457,7 @@ export interface Database {
           status?: string;
           original_author?: string | null;
           source_url?: string | null;
+          theory_id?: string | null;
           linked_dossier_id?: string | null;
           linked_ticket_id?: string | null;
           created_at?: string;
@@ -412,6 +468,7 @@ export interface Database {
           summary?: string;
           id?: string;
           forum_post_id?: string | null;
+          theory_id?: string | null;
           systems_mentioned?: string[];
           coordinates?: Record<string, number> | null;
           confidence?: string;
