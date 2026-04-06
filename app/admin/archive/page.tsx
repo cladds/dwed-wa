@@ -26,6 +26,18 @@ export default async function ArchivePage() {
     .select("id", { count: "exact", head: true })
     .eq("status", "imported");
 
+  // Check if current user is Lead Investigator or Director
+  const { data: { user } } = await supabase.auth.getUser();
+  let canManage = false;
+  if (user) {
+    const { data: operative } = await supabase
+      .from("operatives")
+      .select("rank")
+      .eq("discord_id", user.user_metadata.provider_id ?? user.id)
+      .single();
+    canManage = operative?.rank === "lead_investigator" || operative?.rank === "director";
+  }
+
   // Get unreviewed leads with their source posts
   const { data: leads } = await supabase
     .from("extracted_leads")
@@ -75,7 +87,7 @@ export default async function ArchivePage() {
         </div>
       </div>
 
-      <ArchiveReview leads={leads ?? []} />
+      <ArchiveReview leads={leads ?? []} canManage={canManage} />
     </div>
   );
 }

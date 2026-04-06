@@ -38,7 +38,7 @@ const CONFIDENCE_STYLES: Record<string, string> = {
   low: "border-text-dim text-text-dim",
 };
 
-export function ArchiveReview({ leads }: { leads: ExtractedLead[] }) {
+export function ArchiveReview({ leads, canManage }: { leads: ExtractedLead[]; canManage: boolean }) {
   const [items, setItems] = useState(leads);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [supabase] = useState(() => createClient());
@@ -81,18 +81,22 @@ export function ArchiveReview({ leads }: { leads: ExtractedLead[] }) {
               </h3>
             </div>
             <div className="flex items-center gap-2">
-              <button
-                onClick={() => updateStatus(lead.id, "imported")}
-                className="font-ui text-[9px] tracking-[0.15em] uppercase border border-status-success/30 text-status-success px-3 py-1 hover:bg-status-success/10 transition-colors cursor-pointer"
-              >
-                Import
-              </button>
-              <button
-                onClick={() => updateStatus(lead.id, "dismissed")}
-                className="font-ui text-[9px] tracking-[0.15em] uppercase border border-status-danger/30 text-status-danger px-3 py-1 hover:bg-status-danger/10 transition-colors cursor-pointer"
-              >
-                Dismiss
-              </button>
+              {canManage && (
+                <>
+                  <button
+                    onClick={() => updateStatus(lead.id, "imported")}
+                    className="font-ui text-[9px] tracking-[0.15em] uppercase border border-status-success/30 text-status-success px-3 py-1 hover:bg-status-success/10 transition-colors cursor-pointer"
+                  >
+                    Import
+                  </button>
+                  <button
+                    onClick={() => updateStatus(lead.id, "dismissed")}
+                    className="font-ui text-[9px] tracking-[0.15em] uppercase border border-status-danger/30 text-status-danger px-3 py-1 hover:bg-status-danger/10 transition-colors cursor-pointer"
+                  >
+                    Dismiss
+                  </button>
+                </>
+              )}
               <button
                 onClick={() => setExpanded(expanded === lead.id ? null : lead.id)}
                 className="font-system text-text-faint text-xs px-2 py-1 hover:text-text-primary transition-colors cursor-pointer"
