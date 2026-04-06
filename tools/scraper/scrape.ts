@@ -77,9 +77,46 @@ async function extractPosts(page: Page, pageNumber: number): Promise<ForumPost[]
                          authorEl?.textContent?.trim() ?? "Unknown";
       const authorId = authorEl?.getAttribute("data-user-id") ?? null;
 
-      const contentEl = el.querySelector(".message-body .bbWrapper, .message-content .bbWrapper, article .bbWrapper");
-      const contentHtml = contentEl?.innerHTML ?? "";
-      const contentText = contentEl?.textContent?.trim() ?? "";
+      // Get the message body, remove signatures and quoted headers
+      const bodyEl = el.querySelector(".message-body .bbWrapper, .message-content .bbWrapper, article .bbWrapper");
+      if (bodyEl) {
+        // Remove signature blocks
+        bodyEl.querySelectorAll(".message-signature, .bbCodeBlock--signature, .signature").forEach(s => s.remove());
+        // Remove "X said:" quote attribution headers
+        bodyEl.querySelectorAll(".bbCodeBlock-title").forEach(s => s.remove());
+        // Remove embedded media/iframes
+        bodyEl.querySelectorAll("iframe, .bbMediaWrapper").forEach(s => s.remove());
+      }
+
+      const contentHtml = bodyEl?.innerHTML ?? "";
+
+      // Clean text: normalize whitespace, add spacing around block elements
+      let rawText = "";
+      if (bodyEl) {
+        // Walk the DOM to add newlines for block elements
+        const walk = (node: Node): string => {
+          if (node.nodeType === Node.TEXT_NODE) {
+            return node.textContent ?? "";
+          }
+          if (node.nodeType !== Node.ELEMENT_NODE) return "";
+          const tag = (node as Element).tagName?.toLowerCase();
+          const blockTags = ["p", "div", "br", "li", "tr", "h1", "h2", "h3", "h4", "h5", "h6", "blockquote", "table"];
+          let text = "";
+          if (tag === "td" || tag === "th") {
+            text += " | ";
+          }
+          node.childNodes.forEach(c => { text += walk(c); });
+          if (blockTags.includes(tag)) text += "\n";
+          return text;
+        };
+        rawText = walk(bodyEl);
+      }
+
+      // Collapse multiple whitespace/newlines
+      const contentText = rawText
+        .replace(/[ \t]+/g, " ")
+        .replace(/\n\s*\n+/g, "\n\n")
+        .trim();
 
       const timeEl = el.querySelector("time");
       const postedAt = timeEl?.getAttribute("datetime") ?? null;
