@@ -50,97 +50,77 @@ async function getLastScrapedPage(): Promise<number> {
   return data && data.length > 0 ? data[0].page_number : 0;
 }
 
+const EXTRACT_SCRIPT = `
+(pgNum) => {
+  var posts = [];
+  var postElements = document.querySelectorAll("article.message");
+
+  postElements.forEach(function(el) {
+    var postId = (el.getAttribute("data-content") || "").replace("post-", "") ||
+                 (el.getAttribute("id") || "").replace("js-post-", "") ||
+                 ("unknown-" + Date.now() + "-" + Math.random());
+
+    var authorEl = el.querySelector(".message-name a, .message-userDetails h4 a, [data-user-id]");
+    var authorName = el.getAttribute("data-author") ||
+                     (authorEl ? authorEl.textContent.trim() : "Unknown");
+    var authorId = authorEl ? authorEl.getAttribute("data-user-id") : null;
+
+    var bodyEl = el.querySelector(".message-body .bbWrapper, .message-content .bbWrapper, article .bbWrapper");
+    if (bodyEl) {
+      bodyEl.querySelectorAll(".message-signature, .bbCodeBlock--signature, .signature").forEach(function(s) { s.remove(); });
+      bodyEl.querySelectorAll(".bbCodeBlock-title").forEach(function(s) { s.remove(); });
+      bodyEl.querySelectorAll("iframe, .bbMediaWrapper").forEach(function(s) { s.remove(); });
+    }
+
+    var contentHtml = bodyEl ? bodyEl.innerHTML : "";
+
+    var rawText = "";
+    if (bodyEl) {
+      var walk = function(node) {
+        if (node.nodeType === 3) return node.textContent || "";
+        if (node.nodeType !== 1) return "";
+        var tag = node.tagName ? node.tagName.toLowerCase() : "";
+        var blockTags = ["p", "div", "br", "li", "tr", "h1", "h2", "h3", "h4", "h5", "h6", "blockquote", "table"];
+        var text = "";
+        if (tag === "td" || tag === "th") text += " | ";
+        node.childNodes.forEach(function(c) { text += walk(c); });
+        if (blockTags.indexOf(tag) !== -1) text += "\\n";
+        return text;
+      };
+      rawText = walk(bodyEl);
+    }
+
+    var contentText = rawText.replace(/[ \\t]+/g, " ").replace(/\\n\\s*\\n+/g, "\\n\\n").trim();
+
+    var timeEl = el.querySelector("time");
+    var postedAt = timeEl ? timeEl.getAttribute("datetime") : null;
+
+    var postNumEl = el.querySelector(".message-attribution-opposite a, .u-concealed");
+    var postNumText = postNumEl ? postNumEl.textContent.replace("#", "").trim() : null;
+    var postNumber = postNumText ? parseInt(postNumText, 10) : null;
+
+    if (contentText.length > 0) {
+      posts.push({
+        forum_post_id: postId,
+        thread_id: "168253",
+        page_number: pgNum,
+        post_number: isNaN(postNumber) ? null : postNumber,
+        author_name: authorName,
+        author_id: authorId,
+        content_html: contentHtml,
+        content_text: contentText,
+        posted_at: postedAt
+      });
+    }
+  });
+
+  return posts;
+}
+`;
+
 async function extractPosts(page: Page, pageNumber: number): Promise<ForumPost[]> {
-  return page.evaluate((pgNum: number) => {
-    const posts: {
-      forum_post_id: string;
-      thread_id: string;
-      page_number: number;
-      post_number: number | null;
-      author_name: string;
-      author_id: string | null;
-      content_html: string;
-      content_text: string;
-      posted_at: string | null;
-    }[] = [];
-
-    // XenForo post elements
-    const postElements = document.querySelectorAll("article.message");
-
-    postElements.forEach((el) => {
-      const postId = el.getAttribute("data-content")?.replace("post-", "") ??
-                     el.getAttribute("id")?.replace("js-post-", "") ??
-                     `unknown-${Date.now()}-${Math.random()}`;
-
-      const authorEl = el.querySelector(".message-name a, .message-userDetails h4 a, [data-user-id]");
-      const authorName = el.getAttribute("data-author") ??
-                         authorEl?.textContent?.trim() ?? "Unknown";
-      const authorId = authorEl?.getAttribute("data-user-id") ?? null;
-
-      // Get the message body, remove signatures and quoted headers
-      const bodyEl = el.querySelector(".message-body .bbWrapper, .message-content .bbWrapper, article .bbWrapper");
-      if (bodyEl) {
-        // Remove signature blocks
-        bodyEl.querySelectorAll(".message-signature, .bbCodeBlock--signature, .signature").forEach(s => s.remove());
-        // Remove "X said:" quote attribution headers
-        bodyEl.querySelectorAll(".bbCodeBlock-title").forEach(s => s.remove());
-        // Remove embedded media/iframes
-        bodyEl.querySelectorAll("iframe, .bbMediaWrapper").forEach(s => s.remove());
-      }
-
-      const contentHtml = bodyEl?.innerHTML ?? "";
-
-      // Clean text: normalize whitespace, add spacing around block elements
-      let rawText = "";
-      if (bodyEl) {
-        const walk = function(node) {
-          if (node.nodeType === 3) { // TEXT_NODE
-            return node.textContent || "";
-          }
-          if (node.nodeType !== 1) return ""; // ELEMENT_NODE
-          const tag = node.tagName ? node.tagName.toLowerCase() : "";
-          const blockTags = ["p", "div", "br", "li", "tr", "h1", "h2", "h3", "h4", "h5", "h6", "blockquote", "table"];
-          let text = "";
-          if (tag === "td" || tag === "th") {
-            text += " | ";
-          }
-          node.childNodes.forEach(function(c) { text += walk(c); });
-          if (blockTags.includes(tag)) text += "\n";
-          return text;
-        };
-        rawText = walk(bodyEl);
-      }
-
-      // Collapse multiple whitespace/newlines
-      const contentText = rawText
-        .replace(/[ \t]+/g, " ")
-        .replace(/\n\s*\n+/g, "\n\n")
-        .trim();
-
-      const timeEl = el.querySelector("time");
-      const postedAt = timeEl?.getAttribute("datetime") ?? null;
-
-      const postNumEl = el.querySelector(".message-attribution-opposite a, .u-concealed");
-      const postNumText = postNumEl?.textContent?.replace("#", "").trim();
-      const postNumber = postNumText ? parseInt(postNumText, 10) : null;
-
-      if (contentText.length > 0) {
-        posts.push({
-          forum_post_id: postId,
-          thread_id: "168253",
-          page_number: pgNum,
-          post_number: isNaN(postNumber ?? NaN) ? null : postNumber,
-          author_name: authorName,
-          author_id: authorId,
-          content_html: contentHtml,
-          content_text: contentText,
-          posted_at: postedAt,
-        });
-      }
-    });
-
-    return posts;
-  }, pageNumber);
+  // Use evaluate with raw string to avoid tsx transformation issues
+  return page.evaluate(new Function("return " + EXTRACT_SCRIPT)(), pageNumber);
 }
 
 async function loadCookies(): Promise<Array<{ name: string; value: string; domain: string; path: string }>> {
