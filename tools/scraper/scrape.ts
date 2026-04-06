@@ -119,8 +119,9 @@ const EXTRACT_SCRIPT = `
 `;
 
 async function extractPosts(page: Page, pageNumber: number): Promise<ForumPost[]> {
-  // Use evaluate with raw string to avoid tsx transformation issues
-  return page.evaluate(new Function("return " + EXTRACT_SCRIPT)(), pageNumber);
+  // Inject and call the extraction script as raw JS to avoid tsx transforms
+  const result = await page.evaluate(`(${EXTRACT_SCRIPT})(${pageNumber})`);
+  return result as ForumPost[];
 }
 
 async function loadCookies(): Promise<Array<{ name: string; value: string; domain: string; path: string }>> {
