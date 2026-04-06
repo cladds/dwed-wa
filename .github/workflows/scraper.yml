@@ -1,0 +1,44 @@
+name: Raxxla Thread Scraper
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'  # Every 6 hours
+  workflow_dispatch:        # Manual trigger button
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install scraper dependencies
+        working-directory: tools/scraper
+        run: npm install
+
+      - name: Install Playwright
+        run: npx playwright install chromium --with-deps
+
+      - name: Run scraper (50 pages)
+        working-directory: tools/scraper
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: npm run scrape
+
+      - name: Install classifier dependencies
+        working-directory: tools/classifier
+        run: npm install
+
+      - name: Run classifier
+        working-directory: tools/classifier
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: npm run classify
