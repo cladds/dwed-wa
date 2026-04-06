@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import { SystemTagInput } from "@/components/ui/SystemTagInput";
 
 export default function SubmitTheoryPage() {
   const [supabase] = useState(() => createClient());
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [systems, setSystems] = useState<string[]>([]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -19,16 +21,11 @@ export default function SubmitTheoryPage() {
     const title = form.get("title") as string;
     const summary = form.get("summary") as string;
     const category = form.get("category") as string;
-    const systemsRaw = form.get("systems") as string;
 
     const slug = title
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)/g, "");
-
-    const systems = systemsRaw
-      ? systemsRaw.split(",").map((s) => s.trim()).filter(Boolean)
-      : [];
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -118,13 +115,9 @@ export default function SubmitTheoryPage() {
 
           <div>
             <label className="font-ui text-text-dim text-[10px] tracking-[0.2em] uppercase block mb-2">
-              Related Systems (comma separated, optional)
+              Related Systems (optional)
             </label>
-            <input
-              name="systems"
-              className="w-full bg-bg-deep border border-border px-4 py-2.5 font-system text-coord-blue text-sm focus:border-gold/50 focus:outline-none transition-colors"
-              placeholder="e.g. Shinrarta Dezhra, Achenar, HIP 87621"
-            />
+            <SystemTagInput values={systems} onChange={setSystems} />
           </div>
         </div>
 
