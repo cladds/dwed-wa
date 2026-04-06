@@ -1,7 +1,5 @@
-// Generated types will be placed here after running:
+// Placeholder types until generated via:
 // npx supabase gen types typescript --project-id <project-id> > lib/supabase/types.ts
-//
-// For now, export an empty Database type so imports don't break.
 
 export interface Database {
   public: {
@@ -16,12 +14,25 @@ export interface Database {
           contribution_count: number;
           created_at: string;
         };
-        Insert: Omit<Database["public"]["Tables"]["operatives"]["Row"], "id" | "contribution_count" | "created_at"> & {
+        Insert: {
+          discord_id: string;
+          cmdr_name: string;
           id?: string;
+          rank?: "operative" | "archivist" | "director";
+          bio?: string | null;
           contribution_count?: number;
           created_at?: string;
         };
-        Update: Partial<Database["public"]["Tables"]["operatives"]["Insert"]>;
+        Update: {
+          discord_id?: string;
+          cmdr_name?: string;
+          id?: string;
+          rank?: "operative" | "archivist" | "director";
+          bio?: string | null;
+          contribution_count?: number;
+          created_at?: string;
+        };
+        Relationships: [];
       };
       dossiers: {
         Row: {
@@ -36,15 +47,31 @@ export interface Database {
           created_at: string;
           updated_at: string;
         };
-        Insert: Omit<Database["public"]["Tables"]["dossiers"]["Row"], "id" | "status" | "evidence_strength" | "tags" | "created_at" | "updated_at"> & {
+        Insert: {
+          slug: string;
+          title: string;
+          hypothesis: string;
           id?: string;
           status?: string;
           evidence_strength?: number;
           tags?: string[];
+          author_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
-        Update: Partial<Database["public"]["Tables"]["dossiers"]["Insert"]>;
+        Update: {
+          slug?: string;
+          title?: string;
+          hypothesis?: string;
+          id?: string;
+          status?: string;
+          evidence_strength?: number;
+          tags?: string[];
+          author_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
       };
       system_tickets: {
         Row: {
@@ -61,14 +88,35 @@ export interface Database {
           created_at: string;
           updated_at: string;
         };
-        Insert: Omit<Database["public"]["Tables"]["system_tickets"]["Row"], "id" | "status" | "score" | "created_at" | "updated_at"> & {
+        Insert: {
+          system_name: string;
           id?: string;
+          coord_x?: number | null;
+          coord_y?: number | null;
+          coord_z?: number | null;
+          edsm_id?: string | null;
           status?: string;
           score?: number;
+          what_we_know?: string | null;
+          submitted_by?: string | null;
           created_at?: string;
           updated_at?: string;
         };
-        Update: Partial<Database["public"]["Tables"]["system_tickets"]["Insert"]>;
+        Update: {
+          system_name?: string;
+          id?: string;
+          coord_x?: number | null;
+          coord_y?: number | null;
+          coord_z?: number | null;
+          edsm_id?: string | null;
+          status?: string;
+          score?: number;
+          what_we_know?: string | null;
+          submitted_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
       };
       evidence: {
         Row: {
@@ -86,13 +134,37 @@ export interface Database {
           submitted_by: string | null;
           created_at: string;
         };
-        Insert: Omit<Database["public"]["Tables"]["evidence"]["Row"], "id" | "is_location_specific" | "spoiler_gated" | "created_at"> & {
+        Insert: {
+          type: "screenshot" | "calculation" | "lore" | "mechanic" | "anomaly" | "video";
+          description: string;
           id?: string;
+          url?: string | null;
+          dossier_id?: string | null;
+          ticket_id?: string | null;
+          body_name?: string | null;
+          coord_lat?: number | null;
+          coord_lon?: number | null;
           is_location_specific?: boolean;
           spoiler_gated?: boolean;
+          submitted_by?: string | null;
           created_at?: string;
         };
-        Update: Partial<Database["public"]["Tables"]["evidence"]["Insert"]>;
+        Update: {
+          type?: "screenshot" | "calculation" | "lore" | "mechanic" | "anomaly" | "video";
+          description?: string;
+          id?: string;
+          url?: string | null;
+          dossier_id?: string | null;
+          ticket_id?: string | null;
+          body_name?: string | null;
+          coord_lat?: number | null;
+          coord_lon?: number | null;
+          is_location_specific?: boolean;
+          spoiler_gated?: boolean;
+          submitted_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
       };
       intel_threads: {
         Row: {
@@ -104,12 +176,25 @@ export interface Database {
           created_by: string | null;
           created_at: string;
         };
-        Insert: Omit<Database["public"]["Tables"]["intel_threads"]["Row"], "id" | "pinned" | "created_at"> & {
+        Insert: {
+          title: string;
           id?: string;
+          dossier_id?: string | null;
+          ticket_id?: string | null;
           pinned?: boolean;
+          created_by?: string | null;
           created_at?: string;
         };
-        Update: Partial<Database["public"]["Tables"]["intel_threads"]["Insert"]>;
+        Update: {
+          title?: string;
+          id?: string;
+          dossier_id?: string | null;
+          ticket_id?: string | null;
+          pinned?: boolean;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
       };
       posts: {
         Row: {
@@ -119,11 +204,21 @@ export interface Database {
           author_id: string | null;
           created_at: string;
         };
-        Insert: Omit<Database["public"]["Tables"]["posts"]["Row"], "id" | "created_at"> & {
+        Insert: {
+          thread_id: string;
+          content: string;
           id?: string;
+          author_id?: string | null;
           created_at?: string;
         };
-        Update: Partial<Database["public"]["Tables"]["posts"]["Insert"]>;
+        Update: {
+          thread_id?: string;
+          content?: string;
+          id?: string;
+          author_id?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
       };
       map_zones: {
         Row: {
@@ -139,10 +234,33 @@ export interface Database {
           description: string | null;
           created_by: string | null;
         };
-        Insert: Omit<Database["public"]["Tables"]["map_zones"]["Row"], "id"> & {
+        Insert: {
+          name: string;
+          type: "permit-lock" | "naming-cluster" | "investigation" | "debunked";
           id?: string;
+          centre_x?: number | null;
+          centre_y?: number | null;
+          centre_z?: number | null;
+          radius_ly?: number | null;
+          colour?: string | null;
+          dossier_id?: string | null;
+          description?: string | null;
+          created_by?: string | null;
         };
-        Update: Partial<Database["public"]["Tables"]["map_zones"]["Insert"]>;
+        Update: {
+          name?: string;
+          type?: "permit-lock" | "naming-cluster" | "investigation" | "debunked";
+          id?: string;
+          centre_x?: number | null;
+          centre_y?: number | null;
+          centre_z?: number | null;
+          radius_ly?: number | null;
+          colour?: string | null;
+          dossier_id?: string | null;
+          description?: string | null;
+          created_by?: string | null;
+        };
+        Relationships: [];
       };
     };
     Views: Record<string, never>;

@@ -1,4 +1,13 @@
-export default function LoginPage() {
+"use client";
+
+import { Suspense } from "react";
+import { signInWithDiscord } from "@/lib/auth";
+import { useSearchParams } from "next/navigation";
+
+function LoginContent() {
+  const searchParams = useSearchParams();
+  const error = searchParams.get("error");
+
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh]">
       <h1 className="font-heading text-2xl text-gold mb-4 tracking-wide">
@@ -8,15 +17,27 @@ export default function LoginPage() {
         Authenticate via Discord to access The Dark Wheel Archives.
         All operatives must verify their CMDR designation.
       </p>
+
+      {error && (
+        <p className="font-system text-status-danger text-xs mb-4">
+          {"// authentication failed -- please try again"}
+        </p>
+      )}
+
       <button
-        className="font-ui text-xs tracking-[0.2em] uppercase border border-gold text-gold px-6 py-3 hover:bg-gold hover:text-bg-deep transition-colors"
-        disabled
+        onClick={() => signInWithDiscord()}
+        className="font-ui text-xs tracking-[0.2em] uppercase border border-gold text-gold px-6 py-3 hover:bg-gold hover:text-bg-deep transition-colors cursor-pointer"
       >
         Connect Discord
       </button>
-      <p className="font-system text-text-dim text-xs mt-4">
-        {"// NextAuth Discord OAuth pending configuration"}
-      </p>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginContent />
+    </Suspense>
   );
 }
