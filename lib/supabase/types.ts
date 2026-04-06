@@ -46,6 +46,8 @@ export interface Database {
           author_id: string | null;
           status_changed_by: string | null;
           status_changed_at: string | null;
+          original_author: string | null;
+          source_url: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -87,6 +89,8 @@ export interface Database {
           score: number;
           what_we_know: string | null;
           submitted_by: string | null;
+          original_author: string | null;
+          source_url: string | null;
           created_at: string;
           updated_at: string;
         };
