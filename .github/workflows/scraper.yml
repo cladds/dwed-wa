@@ -24,12 +24,12 @@ jobs:
       - name: Install Playwright
         run: npx playwright install chromium --with-deps
 
-      - name: Run scraper (50 pages)
+      - name: Check for new pages
         working-directory: tools/scraper
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-        run: npm run scrape
+        run: npm run monitor
 
       - name: Install classifier dependencies
         working-directory: tools/classifier
