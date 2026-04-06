@@ -29,6 +29,11 @@ yarn-error.log*
 .env*.local
 netlify-env-import.env
 
+# scraper secrets
+tools/scraper/cookies.json
+tools/scraper/node_modules
+tools/classifier/node_modules
+
 # vercel
 .vercel
 

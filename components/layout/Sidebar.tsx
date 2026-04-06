@@ -18,6 +18,7 @@ const navGroups = [
     label: "Reference",
     items: [
       { href: "/codex", label: "The Codex", icon: "▤" },
+      { href: "/admin/archive", label: "Forum Archive", icon: "▦" },
     ],
   },
   {
