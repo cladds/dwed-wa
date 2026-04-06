@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Cinzel_Decorative, Cinzel, EB_Garamond, Courier_Prime } from "next/font/google";
+import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import "./globals.css";
 
@@ -34,6 +35,9 @@ const courierPrime = Courier_Prime({
 export const metadata: Metadata = {
   title: "The Dark Wheel Archives",
   description: "Collaborative investigation platform for the Independent Raxxla Hunters",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
@@ -46,8 +50,9 @@ export default function RootLayout({
       <body
         className={`${cinzelDecorative.variable} ${cinzel.variable} ${ebGaramond.variable} ${courierPrime.variable} font-body antialiased min-h-screen bg-bg-deep text-text-primary`}
       >
+        <Sidebar />
         <Header />
-        <main className="mx-auto max-w-7xl px-4 py-8">
+        <main className="ml-[240px] mt-14 p-6">
           {children}
         </main>
       </body>
