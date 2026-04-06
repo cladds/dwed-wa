@@ -53,7 +53,7 @@ export default function AdminCodexPage() {
   }
 
   async function generate() {
-    if (!title || sources.length === 0) return;
+    if (sources.length === 0) return;
     setGenerating(true);
     setError(null);
 
