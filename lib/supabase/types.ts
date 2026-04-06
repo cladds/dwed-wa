@@ -481,6 +481,54 @@ export interface Database {
         };
         Relationships: [];
       };
+      codex_articles: {
+        Row: {
+          id: string;
+          title: string;
+          slug: string;
+          content: string;
+          excerpt: string | null;
+          category: "mystery" | "lore" | "faction" | "location" | "mechanic" | "history" | "guide";
+          cover_image: string | null;
+          sources: Array<{ url: string; title: string; type: string }>;
+          tags: string[];
+          published: boolean;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          title: string;
+          slug: string;
+          content: string;
+          category: string;
+          id?: string;
+          excerpt?: string | null;
+          cover_image?: string | null;
+          sources?: unknown;
+          tags?: string[];
+          published?: boolean;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          title?: string;
+          slug?: string;
+          content?: string;
+          category?: string;
+          id?: string;
+          excerpt?: string | null;
+          cover_image?: string | null;
+          sources?: unknown;
+          tags?: string[];
+          published?: boolean;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

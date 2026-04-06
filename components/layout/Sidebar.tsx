@@ -25,6 +25,7 @@ const navGroups = [
     label: "Admin",
     items: [
       { href: "/admin/archive", label: "Forum Archive", icon: "⚙" },
+      { href: "/admin/codex", label: "Write Article", icon: "✎" },
     ],
   },
   {
