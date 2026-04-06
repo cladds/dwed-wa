@@ -1,0 +1,69 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-deep: #050302;
+  --bg-card: #040201;
+  --bg-hover: #080602;
+  --border: #1a1408;
+  --border-gold: #c4923a44;
+  --gold: #c4923a;
+  --gold-glow: #c4923a33;
+  --text-primary: #b08040;
+  --text-mid: #8a6040;
+  --text-dim: #4a3820;
+  --text-faint: #3a2810;
+  --coord-blue: #7dd3e8;
+  --success: #4a9b6a;
+  --danger: #9b4a4a;
+}
+
+body {
+  color: var(--text-primary);
+  background: var(--bg-deep);
+}
+
+/* Status treatments */
+.status-active {
+  border-left: 3px solid var(--gold);
+}
+
+.status-promising {
+  box-shadow: 0 0 12px rgba(125, 211, 232, 0.2);
+}
+
+.status-debunked {
+  opacity: 0.5;
+}
+
+.status-debunked .dossier-title {
+  text-decoration: line-through;
+}
+
+.status-eliminated {
+  opacity: 0.4;
+  text-decoration: line-through;
+}
+
+.status-verified {
+  box-shadow: 0 0 12px rgba(74, 155, 106, 0.3);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-deep);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--text-dim);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-mid);
+}
