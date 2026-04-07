@@ -48,6 +48,7 @@ const STATUS_COLORS: Record<string, string> = {
   verified: "text-status-success",
   disproven: "text-status-danger",
   dead_end: "text-text-dim",
+  cold: "text-[#5a6a7a]",
 };
 
 export default async function Home() {

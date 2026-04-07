@@ -10,6 +10,7 @@ const STATUS_LABELS: Record<string, string> = {
   verified: "Verified",
   disproven: "Disproven",
   dead_end: "Dead End",
+  cold: "Cold",
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -19,6 +20,7 @@ const STATUS_COLORS: Record<string, string> = {
   verified: "text-status-success",
   disproven: "text-status-danger",
   dead_end: "text-text-dim",
+  cold: "text-[#5a6a7a]",
 };
 
 export default async function SystemsPage() {

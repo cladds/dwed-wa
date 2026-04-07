@@ -28,12 +28,13 @@ interface GalaxyMapProps {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  open_lead: "#c4923a",
+  open_lead: "#ff8c00",
   under_investigation: "#a070d0",
-  promising: "#7dd3e8",
-  verified: "#4a9b6a",
-  disproven: "#9b4a4a",
+  promising: "#4cc9f0",
+  verified: "#2ecc71",
+  disproven: "#e74c3c",
   dead_end: "#4a3828",
+  cold: "#5a6a7a",
 };
 
 export function GalaxyMap({ systems, zones }: GalaxyMapProps) {

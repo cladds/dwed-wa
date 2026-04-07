@@ -9,6 +9,7 @@ const STATUS_LABELS: Record<string, string> = {
   verified: "Verified",
   disproven: "Disproven",
   dead_end: "Dead End",
+  cold: "Cold",
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -18,6 +19,7 @@ const STATUS_COLORS: Record<string, string> = {
   verified: "border-status-success text-status-success",
   disproven: "border-status-danger text-status-danger",
   dead_end: "border-text-dim text-text-dim",
+  cold: "border-[#5a6a7a] text-[#5a6a7a]",
 };
 
 const CATEGORY_COLORS: Record<string, string> = {

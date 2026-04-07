@@ -9,6 +9,7 @@ const STATUS_LABELS: Record<string, string> = {
   verified: "Verified",
   disproven: "Disproven",
   dead_end: "Dead End",
+  cold: "Cold",
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -18,6 +19,7 @@ const STATUS_COLORS: Record<string, string> = {
   verified: "border-status-success bg-status-success/10 text-status-success",
   disproven: "border-status-danger bg-status-danger/10 text-status-danger",
   dead_end: "border-text-dim bg-text-dim/10 text-text-dim",
+  cold: "border-[#5a6a7a] bg-[#5a6a7a]/10 text-[#5a6a7a]",
 };
 
 export default async function DossiersPage() {

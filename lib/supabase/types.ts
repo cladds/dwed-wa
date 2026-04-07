@@ -40,7 +40,7 @@ export interface Database {
           slug: string;
           title: string;
           hypothesis: string;
-          status: "open_lead" | "under_investigation" | "promising" | "verified" | "disproven" | "dead_end";
+          status: "open_lead" | "under_investigation" | "promising" | "verified" | "disproven" | "dead_end" | "cold";
           evidence_strength: number;
           tags: string[];
           author_id: string | null;
@@ -85,7 +85,7 @@ export interface Database {
           coord_y: number | null;
           coord_z: number | null;
           edsm_id: string | null;
-          status: "open_lead" | "under_investigation" | "promising" | "verified" | "disproven" | "dead_end";
+          status: "open_lead" | "under_investigation" | "promising" | "verified" | "disproven" | "dead_end" | "cold";
           score: number;
           what_we_know: string | null;
           submitted_by: string | null;
@@ -331,7 +331,7 @@ export interface Database {
           title: string;
           slug: string;
           summary: string;
-          status: "open_lead" | "under_investigation" | "promising" | "verified" | "disproven" | "dead_end";
+          status: "open_lead" | "under_investigation" | "promising" | "verified" | "disproven" | "dead_end" | "cold";
           category: "theory" | "system" | "lore" | "mechanic" | "evidence";
           source: "open" | "forum";
           systems_mentioned: string[];
