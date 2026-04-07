@@ -26,6 +26,7 @@ jobs:
 
       - name: Check for new pages
         working-directory: tools/scraper
+        continue-on-error: true
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
@@ -35,10 +36,11 @@ jobs:
         working-directory: tools/classifier
         run: npm install
 
-      - name: Run classifier
+      - name: Run classifier (max 5 batches to limit API cost)
         working-directory: tools/classifier
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          MAX_BATCHES: "5"
         run: npm run classify

@@ -4,7 +4,7 @@ import { SYSTEM_PROMPT, BATCH_PROMPT } from "./prompts.js";
 
 // --- Config ---
 const BATCH_SIZE = 20;        // Posts per API call
-const BATCHES_PER_RUN = 25;   // 500 posts per run
+const BATCHES_PER_RUN = parseInt(process.env.MAX_BATCHES ?? "25", 10);
 const DELAY_BETWEEN_CALLS = 1000; // 1s between API calls
 
 // --- Clients ---
