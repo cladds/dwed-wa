@@ -3,10 +3,10 @@ import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-const BATCH_SIZE = 30;
-const MAX_BATCHES = 3; // Keep under Netlify function timeout, UI loops for continuation
+const BATCH_SIZE = 20; // Smaller batches for faster API response
+const MAX_BATCHES = 1; // Single batch per request to stay under Netlify 10s timeout
 
-export async function POST(req: Request) {
+export async function POST() {
   if (!ANTHROPIC_API_KEY) return NextResponse.json({ error: "ANTHROPIC_API_KEY not set" }, { status: 500 });
 
   const cookieStore = await cookies();
@@ -18,9 +18,7 @@ export async function POST(req: Request) {
     .select("id", { count: "exact", head: true })
     .eq("ai_processed", false);
 
-  // Allow caller to limit batches (capped to avoid Netlify timeout)
-  const url = new URL(req.url);
-  const maxBatches = Math.min(Number(url.searchParams.get("max") ?? MAX_BATCHES), 5);
+  const maxBatches = MAX_BATCHES;
 
   let totalProcessed = 0;
   let totalExtracted = 0;
@@ -44,8 +42,8 @@ export async function POST(req: Request) {
       content = content.replace(/^.*? said:[\s\S]*?(?=\n[A-Z]|\n\n)/gm, "");
       // Remove signature blocks
       content = content.replace(/---[\s\S]*$/m, "");
-      // Truncate
-      content = content.length > 1200 ? content.substring(0, 1200) + "\n[...truncated]" : content;
+      // Truncate aggressively to keep API calls fast
+      content = content.length > 800 ? content.substring(0, 800) + "\n[...truncated]" : content;
       return `--- POST ${i + 1} ---\nid: ${p.forum_post_id} | ${p.author_name} | p.${p.page_number} #${p.post_number ?? "?"}\n${content}`;
     }).join("\n\n");
 
