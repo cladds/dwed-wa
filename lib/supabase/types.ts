@@ -508,6 +508,33 @@ export interface Database {
         };
         Relationships: [];
       };
+      theory_links: {
+        Row: {
+          id: string;
+          theory_a_id: string;
+          theory_b_id: string;
+          reason: string;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          theory_a_id: string;
+          theory_b_id: string;
+          reason: string;
+          id?: string;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          theory_a_id?: string;
+          theory_b_id?: string;
+          reason?: string;
+          id?: string;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       codex_comments: {
         Row: {
           id: string;

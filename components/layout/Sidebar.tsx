@@ -13,6 +13,7 @@ const navGroups = [
       { href: "/theories?source=open", label: "Open Theories", icon: "▣" },
       { href: "/systems", label: "Coordinates", icon: "◎" },
       { href: "/map", label: "Galaxy Chart", icon: "✦" },
+      { href: "/corkboard", label: "Corkboard", icon: "⊞" },
     ],
   },
   {
