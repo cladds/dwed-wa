@@ -10,16 +10,26 @@ export async function POST() {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
 
-  // Get all unique systems mentioned in theories that aren't in the cache yet
+  // Get all unique systems mentioned in theories AND confirmed facts
   const { data: theories } = await supabase
     .from("theories")
     .select("systems_mentioned");
 
-  if (!theories) return NextResponse.json({ populated: 0 });
+  const { data: facts } = await supabase
+    .from("confirmed_facts")
+    .select("systems_mentioned")
+    .not("systems_mentioned", "eq", "{}");
+
+  if (!theories && !facts) return NextResponse.json({ populated: 0 });
 
   const allSystems = new Set<string>();
-  for (const t of theories) {
+  for (const t of theories ?? []) {
     for (const sys of t.systems_mentioned ?? []) {
+      allSystems.add(sys);
+    }
+  }
+  for (const f of facts ?? []) {
+    for (const sys of f.systems_mentioned ?? []) {
       allSystems.add(sys);
     }
   }
@@ -38,8 +48,8 @@ export async function POST() {
 
   let populated = 0;
 
-  // Fetch from EDSM (max 10 at a time to be respectful)
-  for (const systemName of toFetch.slice(0, 10)) {
+  // Fetch from EDSM (max 20 at a time to be respectful)
+  for (const systemName of toFetch.slice(0, 20)) {
     try {
       const params = new URLSearchParams({
         systemName,
@@ -77,5 +87,5 @@ export async function POST() {
     }
   }
 
-  return NextResponse.json({ populated, remaining: Math.max(0, toFetch.length - 10) });
+  return NextResponse.json({ populated, remaining: Math.max(0, toFetch.length - 20) });
 }
