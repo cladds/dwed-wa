@@ -2,6 +2,8 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
+import { TheoryComments } from "@/components/theories/TheoryComments";
+import { TheoryStatusControl } from "@/components/theories/TheoryStatusControl";
 
 const STATUS_LABELS: Record<string, string> = {
   open_lead: "Open Lead",
@@ -38,6 +40,18 @@ export default async function TheoryDetailPage({ params }: TheoryDetailProps) {
     .single();
 
   if (!theory) notFound();
+
+  // Check if user can manage status
+  const { data: { user } } = await supabase.auth.getUser();
+  let canManageStatus = false;
+  if (user) {
+    const { data: operative } = await supabase
+      .from("operatives")
+      .select("rank")
+      .eq("discord_id", user.user_metadata.provider_id ?? user.id)
+      .single();
+    canManageStatus = ["lead_investigator", "director"].includes(operative?.rank ?? "");
+  }
 
   // Get linked extracted leads with their forum posts
   const { data: linkedLeadsRaw } = await supabase
@@ -234,7 +248,14 @@ export default async function TheoryDetailPage({ params }: TheoryDetailProps) {
               </div>
             </div>
           </div>
+          {canManageStatus && (
+            <TheoryStatusControl theoryId={theory.id} currentStatus={theory.status} />
+          )}
         </div>
+      </div>
+
+      <div className="mt-6">
+        <TheoryComments theoryId={theory.id} />
       </div>
     </div>
   );
