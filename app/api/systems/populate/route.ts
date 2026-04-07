@@ -48,8 +48,8 @@ export async function POST() {
 
   let populated = 0;
 
-  // Fetch from EDSM (max 20 at a time to be respectful)
-  for (const systemName of toFetch.slice(0, 20)) {
+  // Fetch from EDSM (max 5 per request to stay under Netlify timeout)
+  for (const systemName of toFetch.slice(0, 5)) {
     try {
       const params = new URLSearchParams({
         systemName,
@@ -87,5 +87,5 @@ export async function POST() {
     }
   }
 
-  return NextResponse.json({ populated, remaining: Math.max(0, toFetch.length - 20) });
+  return NextResponse.json({ populated, remaining: Math.max(0, toFetch.length - 5) });
 }

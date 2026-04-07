@@ -14,15 +14,16 @@ export async function POST() {
   const { data: theories } = await supabase
     .from("theories")
     .select("id, title, summary, category, evidence_count, source_post_count, systems_mentioned, priority")
-    .order("evidence_count", { ascending: false });
+    .order("evidence_count", { ascending: false })
+    .limit(50);
 
   if (!theories || theories.length < 2) {
     return NextResponse.json({ merged: 0, prioritized: 0, message: "Not enough theories to consolidate" });
   }
 
-  // Step 1: Ask Claude to identify duplicates/merges
+  // Keep summaries short to fit within timeout
   const theorySummaries = theories.map((t, i) =>
-    `[${i}] "${t.title}" (${t.category}) - ${t.evidence_count} evidence\n    ${t.summary.substring(0, 150)}\n    Systems: ${(t.systems_mentioned ?? []).slice(0, 5).join(", ")}`
+    `[${i}] "${t.title}" (${t.category}) - ${t.evidence_count} evidence\n    ${t.summary.substring(0, 100)}`
   ).join("\n\n");
 
   let mergeInstructions: Array<{ keep: number; merge: number[]; newTitle?: string; newSummary?: string }> = [];
