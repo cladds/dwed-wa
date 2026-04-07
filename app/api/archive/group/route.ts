@@ -8,7 +8,7 @@ function slugify(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").substring(0, 80);
 }
 
-export async function POST() {
+export async function POST(request: Request) {
   if (!ANTHROPIC_API_KEY) {
     return NextResponse.json({ error: "ANTHROPIC_API_KEY not configured" }, { status: 500 });
   }
@@ -189,6 +189,14 @@ Return JSON array:
         .eq("id", theoryId);
     }
   }
+
+  // Auto-populate system cache for map
+  try {
+    const baseUrl = request.headers.get("origin") ?? request.headers.get("referer")?.replace(/\/[^/]*$/, "") ?? "";
+    if (baseUrl) {
+      fetch(`${baseUrl}/api/systems/populate`, { method: "POST" }).catch(() => {});
+    }
+  } catch {}
 
   return NextResponse.json({ created, linked, groups: groups.length });
 }

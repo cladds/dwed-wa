@@ -11,11 +11,17 @@ export default async function MapPage() {
     .select("id, system_name, coord_x, coord_y, coord_z, status")
     .not("coord_x", "is", null);
 
+  // Also get systems from cache (populated by search API)
+  const { data: cached } = await supabase
+    .from("system_cache")
+    .select("id, system_name, coord_x, coord_y, coord_z")
+    .not("coord_x", "is", null);
+
   const { data: mapZones } = await supabase
     .from("map_zones")
     .select("id, name, centre_x, centre_y, centre_z, radius_ly, colour, type");
 
-  const systems = (tickets ?? []).map((t) => ({
+  const ticketSystems = (tickets ?? []).map((t) => ({
     id: t.id,
     name: t.system_name,
     x: t.coord_x!,
@@ -23,6 +29,21 @@ export default async function MapPage() {
     z: t.coord_z!,
     status: t.status,
   }));
+
+  // Add cached systems not already in tickets
+  const ticketNames = new Set(ticketSystems.map(s => s.name.toLowerCase()));
+  const cachedSystems = (cached ?? [])
+    .filter(c => !ticketNames.has(c.system_name.toLowerCase()))
+    .map(c => ({
+      id: c.id,
+      name: c.system_name,
+      x: c.coord_x!,
+      y: c.coord_y!,
+      z: c.coord_z!,
+      status: "open_lead",
+    }));
+
+  const systems = [...ticketSystems, ...cachedSystems];
 
   const zones = (mapZones ?? []).map((z) => ({
     id: z.id,
