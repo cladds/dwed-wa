@@ -3,8 +3,8 @@ import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-const BATCH_SIZE = 20; // Smaller batches for faster API response
-const MAX_BATCHES = 1; // Single batch per request to stay under Netlify 10s timeout
+const BATCH_SIZE = 25;
+const MAX_BATCHES = 1;
 
 export async function POST() {
   if (!ANTHROPIC_API_KEY) return NextResponse.json({ error: "ANTHROPIC_API_KEY not set" }, { status: 500 });
@@ -90,11 +90,13 @@ Skip posts with no substantive content. Posts:\n${postsText}` }],
         const jsonMatch = text.match(/\[[\s\S]*\]/);
         if (jsonMatch) {
           const results = JSON.parse(jsonMatch[0]);
+          // Batch all lead inserts into one call
+          const leadsToInsert: Array<{ forum_post_id: string; lead_type: string; title: string; summary: string; systems_mentioned: string[]; confidence: string; original_author: string; source_url: string }> = [];
           for (const r of results) {
             const post = posts.find(p => p.forum_post_id === r.forum_post_id);
             if (!post) continue;
             for (const item of r.items) {
-              await supabase.from("extracted_leads").insert({
+              leadsToInsert.push({
                 forum_post_id: post.id,
                 lead_type: item.lead_type,
                 title: item.title,
@@ -104,8 +106,11 @@ Skip posts with no substantive content. Posts:\n${postsText}` }],
                 original_author: post.author_name,
                 source_url: `https://forums.frontier.co.uk/threads/168253/post-${post.forum_post_id}`,
               });
-              totalExtracted++;
             }
+          }
+          if (leadsToInsert.length > 0) {
+            await supabase.from("extracted_leads").insert(leadsToInsert);
+            totalExtracted += leadsToInsert.length;
           }
         }
       }
