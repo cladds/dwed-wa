@@ -32,6 +32,9 @@ export default function AdminCodexPage() {
   const [newTitle, setNewTitle] = useState("");
   const [newType, setNewType] = useState("forum");
 
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [pdfContent, setPdfContent] = useState<string | null>(null);
+
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,6 +43,18 @@ export default function AdminCodexPage() {
   const [generatedContent, setGeneratedContent] = useState("");
   const [generatedExcerpt, setGeneratedExcerpt] = useState("");
   const [generatedTags, setGeneratedTags] = useState<string[]>([]);
+
+  function handlePdfUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || file.type !== "application/pdf") return;
+    setPdfFile(file);
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = (reader.result as string).split(",")[1];
+      setPdfContent(base64);
+    };
+    reader.readAsDataURL(file);
+  }
 
   function addSource() {
     if (!newUrl) return;
@@ -53,15 +68,21 @@ export default function AdminCodexPage() {
   }
 
   async function generate() {
-    if (sources.length === 0) return;
+    if (sources.length === 0 && !pdfContent) return;
     setGenerating(true);
     setError(null);
 
     try {
+      const payload: Record<string, unknown> = { urls: sources, title, category };
+      if (pdfContent) {
+        payload.pdfContent = pdfContent;
+        payload.pdfName = pdfFile?.name ?? "uploaded.pdf";
+      }
+
       const res = await fetch("/api/codex/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ urls: sources, title, category }),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
@@ -146,6 +167,46 @@ export default function AdminCodexPage() {
 
           <div className="border border-border bg-bg-card p-5 space-y-4">
             <h3 className="font-ui text-text-dim text-[10px] tracking-[0.25em] uppercase">
+              Upload PDF
+            </h3>
+            <div className="border border-dashed border-border p-4 text-center">
+              {pdfFile ? (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="font-system text-gold text-xs">PDF</span>
+                    <span className="font-body text-text-primary text-sm">{pdfFile.name}</span>
+                    <span className="font-system text-text-faint text-[9px]">
+                      {(pdfFile.size / 1024).toFixed(0)}KB
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => { setPdfFile(null); setPdfContent(null); }}
+                    className="font-system text-text-faint text-xs hover:text-status-danger cursor-pointer"
+                  >
+                    remove
+                  </button>
+                </div>
+              ) : (
+                <label className="cursor-pointer block">
+                  <input
+                    type="file"
+                    accept=".pdf"
+                    onChange={handlePdfUpload}
+                    className="hidden"
+                  />
+                  <p className="font-system text-text-dim text-xs">
+                    Click to upload a PDF document
+                  </p>
+                  <p className="font-system text-text-faint text-[9px] mt-1">
+                    Research notes, lore analysis, investigation logs
+                  </p>
+                </label>
+              )}
+            </div>
+          </div>
+
+          <div className="border border-border bg-bg-card p-5 space-y-4">
+            <h3 className="font-ui text-text-dim text-[10px] tracking-[0.25em] uppercase">
               Source Links
             </h3>
 
@@ -195,7 +256,7 @@ export default function AdminCodexPage() {
 
           <button
             onClick={generate}
-            disabled={generating || sources.length === 0}
+            disabled={generating || (sources.length === 0 && !pdfContent)}
             className="w-full font-ui text-[10px] tracking-[0.15em] uppercase bg-gold/10 border border-gold/30 text-gold px-6 py-3 hover:bg-gold/20 transition-colors cursor-pointer disabled:opacity-50"
           >
             {generating ? "Generating article..." : "Generate from sources"}

@@ -21,33 +21,54 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { urls, title, category } = body as {
+  const { urls, title, category, pdfContent, pdfName } = body as {
     urls: Array<{ url: string; title: string; type: string }>;
     title?: string;
     category: string;
+    pdfContent?: string; // base64 encoded PDF
+    pdfName?: string;
   };
 
-  if (!urls?.length || !category) {
-    return NextResponse.json({ error: "Missing urls or category" }, { status: 400 });
+  if ((!urls?.length && !pdfContent) || !category) {
+    return NextResponse.json({ error: "Missing sources or category" }, { status: 400 });
   }
 
-  // Fetch content from each URL
+  const anthropicKey = process.env.ANTHROPIC_API_KEY;
+  if (!anthropicKey) {
+    return NextResponse.json({ error: "ANTHROPIC_API_KEY not configured" }, { status: 500 });
+  }
+
+  // Build message content blocks
+  const messageContent: Array<Record<string, unknown>> = [];
+
+  // Add PDF as document if provided
+  if (pdfContent) {
+    messageContent.push({
+      type: "document",
+      source: {
+        type: "base64",
+        media_type: "application/pdf",
+        data: pdfContent,
+      },
+    });
+  }
+
+  // Fetch URL sources
   const contents: string[] = [];
-  for (const source of urls) {
+  for (const source of urls ?? []) {
     try {
       const res = await fetch(source.url, {
         headers: { "User-Agent": "Mozilla/5.0 (compatible; darkwheel.space)" },
       });
       if (res.ok) {
         const html = await res.text();
-        // Strip HTML tags, keep text
         const text = html
           .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
           .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
           .replace(/<[^>]+>/g, " ")
           .replace(/\s+/g, " ")
           .trim()
-          .substring(0, 8000); // Limit per source
+          .substring(0, 8000);
         contents.push(`[Source: ${source.title}]\n${text}`);
       }
     } catch {
@@ -55,11 +76,18 @@ export async function POST(request: Request) {
     }
   }
 
-  // Generate article with Claude
-  const anthropicKey = process.env.ANTHROPIC_API_KEY;
-  if (!anthropicKey) {
-    return NextResponse.json({ error: "ANTHROPIC_API_KEY not configured" }, { status: 500 });
+  // Build the text prompt
+  let prompt = `Write a codex article for category "${category}".${title ? ` Suggested title: "${title}".` : " Generate an appropriate title."}`;
+
+  if (pdfContent) {
+    prompt += `\n\nThe attached PDF document "${pdfName ?? "uploaded document"}" is the primary source. Extract all key information, system names, character details, lore analysis, and investigation notes from it.`;
   }
+
+  if (contents.length > 0) {
+    prompt += `\n\nAdditional sources:\n\n${contents.join("\n\n---\n\n")}`;
+  }
+
+  messageContent.push({ type: "text", text: prompt });
 
   const claudeRes = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -80,20 +108,15 @@ Rules:
 - Use present tense for active investigations, past tense for historical events
 - Include specific system names, dates, commander names when available
 - No "it's worth noting", "interestingly", "in conclusion", "let's dive in" or any AI-sounding phrases
-- NEVER use em dashes (--) or (—). Use commas, periods, or semicolons instead
+- NEVER use em dashes (--) or (---). Use commas, periods, or semicolons instead
 - No bullet points unless listing specific systems or coordinates
+- If the source is research notes or a PDF document, synthesise the findings into a coherent briefing. Preserve all system names, character names, and specific details
 - If the source content is written in roleplay (RP) or in-character style, extract the real investigation intel, systems, and lore references from it and write the article in a factual briefing style instead
-- If the source is a forum thread, focus on the original post and key findings, skip the casual replies
 - First line: TITLE: (suggested article title, max 60 chars)
 - Second line: EXCERPT: (1 sentence summary, under 150 chars)
 - Third line: TAGS: (comma separated tags)
 - Then the full article content`,
-      messages: [
-        {
-          role: "user",
-          content: `Write a codex article for category "${category}".${title ? ` Suggested title: "${title}".` : " Generate an appropriate title."}\n\nUse these sources:\n\n${contents.join("\n\n---\n\n")}`,
-        },
-      ],
+      messages: [{ role: "user", content: messageContent }],
     }),
   });
 
@@ -139,6 +162,6 @@ Rules:
     excerpt,
     tags,
     category,
-    sources: urls,
+    sources: urls ?? [],
   });
 }
