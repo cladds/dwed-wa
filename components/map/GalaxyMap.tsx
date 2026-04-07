@@ -212,7 +212,7 @@ export function GalaxyMap({ systems, zones }: GalaxyMapProps) {
     isDragging.current = false;
   };
 
-  const handleClick = (e: React.MouseEvent) => {
+  const handleClick = () => {
     if (hoveredSystem) {
       window.location.href = `/systems/${hoveredSystem.id}`;
     }

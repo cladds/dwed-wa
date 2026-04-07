@@ -27,20 +27,42 @@ export default async function CodexArticlePage({ params }: CodexDetailProps) {
 
   const sources: Source[] = Array.isArray(article.sources) ? article.sources as Source[] : [];
 
-  // Simple markdown-to-html: paragraphs, bold, headers
-  const contentHtml = (article.content as string)
-    .split("\n\n")
-    .map((block: string) => {
-      if (block.startsWith("### ")) return `<h3 class="font-ui text-gold text-sm tracking-wide mt-6 mb-2">${block.slice(4)}</h3>`;
-      if (block.startsWith("## ")) return `<h2 class="font-heading text-gold text-lg mt-8 mb-3">${block.slice(3)}</h2>`;
-      if (block.startsWith("# ")) return `<h1 class="font-heading text-gold text-xl mt-8 mb-3">${block.slice(2)}</h1>`;
-      const formatted = block
-        .replace(/\*\*(.+?)\*\*/g, '<strong class="text-text-primary">$1</strong>')
+  // Markdown-to-html: process line by line for headers, then group into paragraphs
+  const lines = (article.content as string).split("\n");
+  const htmlParts: string[] = [];
+  let currentParagraph: string[] = [];
+
+  function flushParagraph() {
+    if (currentParagraph.length > 0) {
+      const text = currentParagraph.join(" ")
+        .replace(/\*\*(.+?)\*\*/g, '<strong class="text-text-primary font-semibold">$1</strong>')
         .replace(/\*(.+?)\*/g, '<em>$1</em>')
-        .replace(/`(.+?)`/g, '<code class="font-system text-coord-blue text-sm bg-bg-deep px-1">$1</code>');
-      return `<p class="font-body text-text-mid text-base leading-relaxed mb-4">${formatted}</p>`;
-    })
-    .join("");
+        .replace(/`(.+?)`/g, '<code class="font-system text-coord-blue text-sm bg-bg-deep px-1.5 py-0.5">$1</code>');
+      htmlParts.push(`<p class="font-body text-text-mid text-base leading-relaxed mb-4">${text}</p>`);
+      currentParagraph = [];
+    }
+  }
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith("### ")) {
+      flushParagraph();
+      htmlParts.push(`<h3 class="font-ui text-gold text-base tracking-wide mt-8 mb-3 uppercase">${trimmed.slice(4)}</h3>`);
+    } else if (trimmed.startsWith("## ")) {
+      flushParagraph();
+      htmlParts.push(`<h2 class="font-heading text-gold text-xl mt-10 mb-4">${trimmed.slice(3)}</h2>`);
+    } else if (trimmed.startsWith("# ")) {
+      flushParagraph();
+      htmlParts.push(`<h1 class="font-heading text-gold text-2xl mt-10 mb-4">${trimmed.slice(2)}</h1>`);
+    } else if (trimmed === "") {
+      flushParagraph();
+    } else {
+      currentParagraph.push(trimmed);
+    }
+  }
+  flushParagraph();
+
+  const contentHtml = htmlParts.join("");
 
   return (
     <div className="max-w-3xl mx-auto">

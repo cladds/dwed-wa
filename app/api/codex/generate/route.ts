@@ -80,6 +80,7 @@ Rules:
 - Use present tense for active investigations, past tense for historical events
 - Include specific system names, dates, commander names when available
 - No "it's worth noting", "interestingly", "in conclusion", "let's dive in" or any AI-sounding phrases
+- NEVER use em dashes (--) or (—). Use commas, periods, or semicolons instead
 - No bullet points unless listing specific systems or coordinates
 - If the source content is written in roleplay (RP) or in-character style, extract the real investigation intel, systems, and lore references from it and write the article in a factual briefing style instead
 - If the source is a forum thread, focus on the original post and key findings, skip the casual replies
