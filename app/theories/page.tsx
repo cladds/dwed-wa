@@ -64,10 +64,11 @@ export default async function TheoriesPage({ searchParams }: TheoriesPageProps) 
           Theories
         </h1>
         <Link
-          href="/submit/dossier"
-          className="font-ui text-[10px] tracking-[0.15em] uppercase bg-gold/10 border border-gold/30 text-gold px-4 py-2 hover:bg-gold/20 transition-colors"
+          href="/submit/theory"
+          className="font-ui text-[10px] tracking-[0.15em] uppercase bg-gold/10 border border-gold/30 text-gold px-3 md:px-4 py-2 hover:bg-gold/20 transition-colors whitespace-nowrap"
         >
-          + New Theory
+          <span className="hidden sm:inline">+ New Theory</span>
+          <span className="sm:hidden">+ New</span>
         </Link>
       </div>
 

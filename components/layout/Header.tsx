@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { signOut } from "@/lib/auth";
@@ -49,7 +50,11 @@ export function Header() {
       <div className="flex items-center gap-4">
         {/* Spacer for mobile hamburger button */}
         <div className="w-8 md:hidden" />
-        <h2 className="font-system text-text-dim text-xs tracking-widest uppercase hidden sm:block">
+        <Link href="/" className="md:hidden flex items-center gap-2">
+          <Image src="/logo.svg" alt="" width={20} height={20} />
+          <span className="font-heading text-gold text-xs tracking-[0.1em]">darkwheel</span>
+        </Link>
+        <h2 className="font-system text-text-dim text-xs tracking-widest uppercase hidden md:block">
           Operations Desk
         </h2>
       </div>
