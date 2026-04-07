@@ -5,7 +5,10 @@
   "type": "module",
   "scripts": {
     "classify": "npx tsx classify.ts",
-    "group": "npx tsx group.ts"
+    "group": "npx tsx group.ts",
+    "pipeline": "npx tsx pipeline.ts",
+    "prescan": "npx tsx pipeline.ts prescan",
+    "groupall": "npx tsx pipeline.ts group"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
