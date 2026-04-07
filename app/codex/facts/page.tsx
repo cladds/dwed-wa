@@ -68,27 +68,31 @@ export default async function ConfirmedFactsPage() {
   }
 
   function FactCard({ fact }: { fact: Fact }) {
-    const style = STATUS_STYLES[fact.status] ?? STATUS_STYLES.confirmed;
+    const accentColor = fact.status === "confirmed" ? "bg-status-success/60" :
+      fact.status === "debunked" ? "bg-status-danger/60" : "bg-text-dim/40";
     return (
-      <Link href={`/codex/facts/${fact.id}`} className={`block border ${style.borderColor} bg-bg-card hover:bg-bg-hover transition-colors group`}>
-        <div className="p-4">
-          <div className="flex items-center gap-2 mb-2 flex-wrap">
-            {fact.source_person && (
-              <span className="font-system text-text-faint text-[9px]">
-                {fact.source_person}
-              </span>
-            )}
-            {fact.source_date && (
-              <span className="font-system text-text-faint text-[9px]">
-                {fact.source_date}
-              </span>
-            )}
+      <Link href={`/codex/facts/${fact.id}`} className="block hover:bg-bg-hover transition-colors group">
+        <div className="flex h-full">
+          <div className={`w-[3px] ${accentColor} shrink-0`} />
+          <div className="p-4 flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-2">
+              {fact.source_person && (
+                <span className="font-system text-gold/70 text-[9px]">
+                  {fact.source_person}
+                </span>
+              )}
+              {fact.source_date && (
+                <span className="font-system text-text-faint text-[9px]">
+                  {fact.source_date}
+                </span>
+              )}
+              {fact.source_url && (
+                <span className="font-system text-coord-blue text-[9px] ml-auto">source</span>
+              )}
+            </div>
+            <h3 className="font-body text-text-primary text-sm mb-2 group-hover:text-gold transition-colors leading-snug">{fact.title}</h3>
+            <p className="font-body text-text-dim text-xs leading-relaxed line-clamp-2 italic">{fact.description}</p>
           </div>
-          <h3 className="font-body text-text-primary text-sm mb-1.5 group-hover:text-gold transition-colors leading-snug">{fact.title}</h3>
-          <p className="font-body text-text-mid text-xs leading-relaxed line-clamp-2">{fact.description}</p>
-          {fact.source_url && (
-            <p className="font-system text-coord-blue text-[9px] mt-2">source</p>
-          )}
         </div>
       </Link>
     );
@@ -122,18 +126,18 @@ export default async function ConfirmedFactsPage() {
       </div>
 
       {/* Stats bar */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        <div className="border border-status-success/20 bg-bg-card p-4 text-center">
-          <p className="font-system text-status-success text-2xl mb-1">{confirmed.length}</p>
-          <p className="font-ui text-text-dim text-[9px] tracking-[0.2em] uppercase">Confirmed</p>
+      <div className="grid grid-cols-3 gap-px bg-border mb-8 border border-border">
+        <div className="bg-bg-card p-4 text-center">
+          <p className="font-heading text-status-success text-xl mb-0.5">{confirmed.length}</p>
+          <p className="font-ui text-status-success/60 text-[9px] tracking-[0.2em] uppercase">Confirmed</p>
         </div>
-        <div className="border border-status-danger/20 bg-bg-card p-4 text-center">
-          <p className="font-system text-status-danger text-2xl mb-1">{debunked.length}</p>
-          <p className="font-ui text-text-dim text-[9px] tracking-[0.2em] uppercase">Debunked</p>
+        <div className="bg-bg-card p-4 text-center">
+          <p className="font-heading text-status-danger text-xl mb-0.5">{debunked.length}</p>
+          <p className="font-ui text-status-danger/60 text-[9px] tracking-[0.2em] uppercase">Debunked</p>
         </div>
-        <div className="border border-border bg-bg-card p-4 text-center">
-          <p className="font-system text-text-dim text-2xl mb-1">{rumours.length}</p>
-          <p className="font-ui text-text-dim text-[9px] tracking-[0.2em] uppercase">Rumours</p>
+        <div className="bg-bg-card p-4 text-center">
+          <p className="font-heading text-text-dim text-xl mb-0.5">{rumours.length}</p>
+          <p className="font-ui text-text-faint text-[9px] tracking-[0.2em] uppercase">Rumours</p>
         </div>
       </div>
 
@@ -156,9 +160,9 @@ export default async function ConfirmedFactsPage() {
                     {SOURCE_TYPE_LABELS[sourceType] ?? sourceType} ({confirmedByType[sourceType].length})
                   </h3>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 divide-border">
                   {confirmedByType[sourceType].map((f, i) => (
-                    <div key={f.id} className={`${i % 2 === 0 && confirmedByType[sourceType].length > 1 ? "md:border-r md:border-border" : ""} ${i < confirmedByType[sourceType].length - (confirmedByType[sourceType].length % 2 === 0 ? 2 : 1) ? "border-b border-border" : i === confirmedByType[sourceType].length - 2 && confirmedByType[sourceType].length % 2 === 0 ? "border-b border-border" : ""}`}>
+                    <div key={f.id} className={`${i % 2 === 0 ? "md:border-r border-border" : ""} ${Math.floor(i / 2) < Math.floor((confirmedByType[sourceType].length - 1) / 2) ? "md:border-b md:border-border" : ""}`}>
                       <FactCard fact={f} />
                     </div>
                   ))}
@@ -179,10 +183,10 @@ export default async function ConfirmedFactsPage() {
             </h2>
             <div className="flex-1 border-b border-status-danger/20" />
           </div>
-          <div className="border border-status-danger/20">
-            <div className="grid grid-cols-1 md:grid-cols-2">
+          <div className="border border-status-danger/20 bg-bg-card">
+            <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 divide-border">
               {debunked.map((f, i) => (
-                <div key={f.id} className={`${i % 2 === 0 && debunked.length > 1 ? "md:border-r md:border-border" : ""} ${i < debunked.length - 2 ? "border-b border-border" : ""}`}>
+                <div key={f.id} className={`${i % 2 === 0 ? "md:border-r border-border" : ""} ${Math.floor(i / 2) < Math.floor((debunked.length - 1) / 2) ? "md:border-b md:border-border" : ""}`}>
                   <FactCard fact={f} />
                 </div>
               ))}
@@ -201,10 +205,10 @@ export default async function ConfirmedFactsPage() {
             </h2>
             <div className="flex-1 border-b border-border" />
           </div>
-          <div className="border border-border">
-            <div className="grid grid-cols-1 md:grid-cols-2">
+          <div className="border border-border bg-bg-card">
+            <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 divide-border">
               {rumours.map((f, i) => (
-                <div key={f.id} className={`${i % 2 === 0 && rumours.length > 1 ? "md:border-r md:border-border" : ""} ${i < rumours.length - 2 ? "border-b border-border" : ""}`}>
+                <div key={f.id} className={`${i % 2 === 0 ? "md:border-r border-border" : ""} ${Math.floor(i / 2) < Math.floor((rumours.length - 1) / 2) ? "md:border-b md:border-border" : ""}`}>
                   <FactCard fact={f} />
                 </div>
               ))}
