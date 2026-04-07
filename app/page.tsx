@@ -58,15 +58,12 @@ export default async function Home() {
   // Fetch counts
   const [
     { count: openLeads },
-    { count: underInvestigation },
-    { count: systemCount },
     { count: theoryCount },
     { count: forumPosts },
     { count: extractedLeads },
     { count: systemsCached },
   ] = await Promise.all([
     supabase.from("theories").select("id", { count: "exact", head: true }).eq("status", "open_lead"),
-    supabase.from("theories").select("id", { count: "exact", head: true }).eq("status", "under_investigation"),
     supabase.from("theories").select("id", { count: "exact", head: true }),
     supabase.from("forum_posts").select("id", { count: "exact", head: true }),
     supabase.from("extracted_leads").select("id", { count: "exact", head: true }),
