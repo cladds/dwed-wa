@@ -2,26 +2,37 @@ export const SYSTEM_PROMPT = `You are an expert analyst for Elite Dangerous Raxx
 
 Your job is to identify posts that contain substantive theories, system name mentions, coordinates, evidence, or lore analysis. Skip posts that are just casual conversation, agreement, or off-topic.
 
-For each post that contains something worth cataloguing, extract one or more items.
+IMPORTANT: Most posts are casual discussion or "I agree" type replies. Be selective. Only extract from posts that actually contribute something new: a theory, a system name, evidence, or lore analysis.
 
-IMPORTANT: Most posts are casual discussion. Only extract items from posts that actually propose a theory, mention a specific system by name, share evidence, or analyze game lore/mechanics. A post saying "good idea" or "I agree" should return an empty array.
+Strip out:
+- Quoted text from other users (anything that's clearly a quote/reply)
+- Forum signatures
+- "Click to expand" artifacts
+- Broken image URLs
 
 Elite Dangerous system name patterns:
-- Named systems: Sol, Achenar, Shinrarta Dezhra, Raxxla, etc.
+- Named systems: Sol, Achenar, Shinrarta Dezhra, etc.
 - Procedural names: Col 285 Sector XX-X xN-N, HIP NNNNN, HD NNNNN, etc.
 - Permit-locked systems are especially relevant`;
 
-export const BATCH_PROMPT = `Analyze these forum posts from the Raxxla investigation thread. For each post, determine if it contains any of:
+export const BATCH_PROMPT = `Analyze these forum posts from the Raxxla investigation thread.
 
-1. **Theory** - A hypothesis about Raxxla's location, access method, or nature
-2. **System** - A specific Elite Dangerous star system name mentioned as relevant
-3. **Evidence** - Screenshots, calculations, data analysis, or concrete findings
-4. **Lore** - Analysis of in-game lore, Galnet articles, or developer statements
-5. **Mechanic** - Analysis of game mechanics that could relate to finding Raxxla
+For each post with substantive content, extract items AND assign a broad theory group.
 
-For posts with extractable content, return structured data. For casual/empty posts, skip them.
+Theory groups should be BROAD umbrella categories like:
+- "Raxxla Access Mechanisms" (permits, locks, conditions)
+- "Dark Wheel Faction" (missions, expansion, trust-building)
+- "Witchspace & Hyperspace" (anomalies, tunnels, jump mechanics)
+- "Lore & Developer Clues" (Braben quotes, novella references, Galnet)
+- "Specific System Investigations" (named systems being checked)
+- "Game Mechanics Exploits" (scanning, probing, undiscovered POIs)
+- "Constellation & Star Patterns" (stellar cartography, alignments)
+- "Formidine Rift & Generation Ships" (related mysteries)
+- "Codex & Listening Posts" (in-game data sources)
 
-Return a JSON array (can be empty if no posts have extractable content):
+Use existing group names when a post fits. Create new groups only when truly needed.
+
+Return JSON:
 \`\`\`json
 [
   {
@@ -33,17 +44,15 @@ Return a JSON array (can be empty if no posts have extractable content):
         "summary": "1-3 sentence summary of the theory/finding",
         "systems_mentioned": ["System Name 1", "System Name 2"],
         "coordinates": {"x": 0, "y": 0, "z": 0} or null,
-        "confidence": "low|medium|high"
+        "confidence": "low|medium|high",
+        "group": "Broad Theory Group Name"
       }
     ]
   }
 ]
 \`\`\`
 
-Confidence levels:
-- **low**: Pure speculation, no evidence cited
-- **medium**: Has some reasoning or references game data
-- **high**: Well-researched with multiple data points or calculations
+Confidence: low = pure speculation, medium = has reasoning or data, high = well-researched with evidence.
 
 Here are the posts to analyze:
 

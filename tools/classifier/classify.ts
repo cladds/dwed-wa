@@ -3,9 +3,9 @@ import { createClient } from "@supabase/supabase-js";
 import { SYSTEM_PROMPT, BATCH_PROMPT } from "./prompts.js";
 
 // --- Config ---
-const BATCH_SIZE = 20;        // Posts per API call
-const BATCHES_PER_RUN = parseInt(process.env.MAX_BATCHES ?? "25", 10);
-const DELAY_BETWEEN_CALLS = 1000; // 1s between API calls
+const BATCH_SIZE = parseInt(process.env.BATCH_SIZE ?? "30", 10);
+const BATCHES_PER_RUN = parseInt(process.env.MAX_BATCHES ?? "50", 10);
+const DELAY_BETWEEN_CALLS = 800;
 
 // --- Clients ---
 const anthropicKey = process.env.ANTHROPIC_API_KEY;
@@ -20,6 +20,9 @@ if (!anthropicKey || !supabaseUrl || !supabaseKey) {
 const anthropic = new Anthropic({ apiKey: anthropicKey });
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+// Track groups across batches for consistency
+const groupCounts = new Map<string, number>();
+
 // --- Types ---
 interface ExtractedItem {
   lead_type: string;
@@ -28,6 +31,7 @@ interface ExtractedItem {
   systems_mentioned: string[];
   coordinates: Record<string, number> | null;
   confidence: string;
+  group: string;
 }
 
 interface PostExtraction {
@@ -37,20 +41,20 @@ interface PostExtraction {
 
 // --- Main ---
 async function main() {
-  // Get unprocessed posts
-  const { data: unprocessedCount } = await supabase
+  const { count } = await supabase
     .from("forum_posts")
     .select("id", { count: "exact", head: true })
     .eq("ai_processed", false);
 
   console.log(`\n=== Raxxla Thread Classifier ===`);
-  console.log(`Unprocessed posts remaining: ${unprocessedCount}\n`);
+  console.log(`Unprocessed posts: ${count ?? "unknown"}`);
+  console.log(`Config: ${BATCH_SIZE} posts/batch, ${BATCHES_PER_RUN} batches max\n`);
 
   let totalExtracted = 0;
   let totalProcessed = 0;
+  let totalCost = 0;
 
   for (let batch = 0; batch < BATCHES_PER_RUN; batch++) {
-    // Fetch next batch of unprocessed posts
     const { data: posts, error } = await supabase
       .from("forum_posts")
       .select("id, forum_post_id, author_name, content_text, posted_at, page_number, post_number")
@@ -69,17 +73,19 @@ async function main() {
       break;
     }
 
-    console.log(`Batch ${batch + 1}/${BATCHES_PER_RUN}: Processing ${posts.length} posts (pages ${posts[0].page_number}-${posts[posts.length - 1].page_number})`);
+    const pageRange = `${posts[0].page_number}-${posts[posts.length - 1].page_number}`;
+    process.stdout.write(`Batch ${batch + 1}/${BATCHES_PER_RUN}: ${posts.length} posts (p.${pageRange}) `);
 
-    // Build prompt with post content
+    // Include existing group names for consistency
+    const groupContext = groupCounts.size > 0
+      ? `\nExisting theory groups so far: ${Array.from(groupCounts.entries()).map(([g, c]) => `"${g}" (${c})`).join(", ")}\nReuse these group names when applicable.\n`
+      : "";
+
     const postsText = posts.map((p, i) => {
-      const header = `--- POST ${i + 1} ---`;
-      const meta = `forum_post_id: ${p.forum_post_id} | Author: ${p.author_name} | Page: ${p.page_number} | #${p.post_number ?? "?"} | Date: ${p.posted_at ?? "unknown"}`;
-      // Truncate very long posts
-      const content = p.content_text.length > 2000
-        ? p.content_text.substring(0, 2000) + "\n[...truncated]"
+      const content = p.content_text.length > 1500
+        ? p.content_text.substring(0, 1500) + "\n[...truncated]"
         : p.content_text;
-      return `${header}\n${meta}\n${content}\n`;
+      return `--- POST ${i + 1} ---\nforum_post_id: ${p.forum_post_id} | ${p.author_name} | p.${p.page_number} #${p.post_number ?? "?"} | ${p.posted_at ?? "?"}\n${content}\n`;
     }).join("\n");
 
     try {
@@ -87,34 +93,34 @@ async function main() {
         model: "claude-haiku-4-5-20251001",
         max_tokens: 4096,
         system: SYSTEM_PROMPT,
-        messages: [
-          {
-            role: "user",
-            content: BATCH_PROMPT + postsText,
-          },
-        ],
+        messages: [{
+          role: "user",
+          content: groupContext + BATCH_PROMPT + postsText,
+        }],
       });
 
-      // Extract JSON from response
       const responseText = response.content
         .filter((block): block is Anthropic.TextBlock => block.type === "text")
         .map((block) => block.text)
         .join("");
 
       const jsonMatch = responseText.match(/\[[\s\S]*\]/);
-      if (!jsonMatch) {
-        console.log("  No JSON found in response, marking as processed");
-      } else {
+      let batchExtracted = 0;
+
+      if (jsonMatch) {
         const extractions: PostExtraction[] = JSON.parse(jsonMatch[0]);
 
-        // Store extracted leads
         for (const extraction of extractions) {
-          // Find the DB id for this forum_post_id
           const post = posts.find((p) => p.forum_post_id === extraction.forum_post_id);
           if (!post) continue;
 
           for (const item of extraction.items) {
             const sourceUrl = `https://forums.frontier.co.uk/threads/168253/post-${post.forum_post_id}`;
+
+            // Track group for cross-batch consistency
+            const group = item.group ?? "Uncategorised";
+            groupCounts.set(group, (groupCounts.get(group) ?? 0) + 1);
+
             const { error: insertError } = await supabase
               .from("extracted_leads")
               .insert({
@@ -129,18 +135,15 @@ async function main() {
                 source_url: sourceUrl,
               });
 
-            if (insertError) {
-              console.error(`  Insert error: ${insertError.message}`);
-            } else {
+            if (!insertError) {
+              batchExtracted++;
               totalExtracted++;
             }
           }
         }
-
-        console.log(`  Extracted ${extractions.reduce((sum, e) => sum + e.items.length, 0)} leads from ${extractions.length} posts`);
       }
 
-      // Mark all posts in this batch as processed
+      // Mark batch as processed
       const postIds = posts.map((p) => p.id);
       await supabase
         .from("forum_posts")
@@ -149,25 +152,39 @@ async function main() {
 
       totalProcessed += posts.length;
 
-      // Token usage
-      console.log(`  Tokens: ${response.usage.input_tokens} in / ${response.usage.output_tokens} out`);
+      const inputCost = (response.usage.input_tokens / 1000000) * 0.25;
+      const outputCost = (response.usage.output_tokens / 1000000) * 1.25;
+      totalCost += inputCost + outputCost;
+
+      console.log(`-> ${batchExtracted} leads | ${response.usage.input_tokens}/${response.usage.output_tokens} tokens | $${(inputCost + outputCost).toFixed(4)}`);
 
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      console.error(`  API error: ${msg}`);
-      // Mark as processed anyway to avoid infinite loops
+      console.log(`-> ERROR: ${msg}`);
+      // Mark as processed to avoid loops
       const postIds = posts.map((p) => p.id);
       await supabase
         .from("forum_posts")
         .update({ ai_processed: true, ai_processed_at: new Date().toISOString() })
         .in("id", postIds);
+      totalProcessed += posts.length;
     }
 
-    // Delay
     await new Promise((r) => setTimeout(r, DELAY_BETWEEN_CALLS));
   }
 
-  console.log(`\nDone. Processed: ${totalProcessed} posts, Extracted: ${totalExtracted} leads`);
+  console.log(`\n=== Summary ===`);
+  console.log(`Processed: ${totalProcessed} posts`);
+  console.log(`Extracted: ${totalExtracted} leads`);
+  console.log(`Total cost: $${totalCost.toFixed(4)}`);
+
+  if (groupCounts.size > 0) {
+    console.log(`\nTheory groups found:`);
+    const sorted = Array.from(groupCounts.entries()).sort((a, b) => b[1] - a[1]);
+    for (const [group, count] of sorted) {
+      console.log(`  ${count}x ${group}`);
+    }
+  }
 }
 
 main().catch(console.error);
