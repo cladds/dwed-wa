@@ -94,16 +94,36 @@ export default function AdminCodexPage() {
     setSources(sources.filter((_, idx) => idx !== i));
   }
 
+  async function uploadPdfToStorage(): Promise<string | null> {
+    if (!pdfFile) return null;
+    const fileName = `pdfs/${Date.now()}-${pdfFile.name.replace(/[^a-z0-9._-]/gi, "_")}`;
+    const { error: uploadError } = await supabase.storage
+      .from("images")
+      .upload(fileName, pdfFile, { contentType: "application/pdf" });
+    if (uploadError) return null;
+    const { data: urlData } = supabase.storage.from("images").getPublicUrl(fileName);
+    return urlData.publicUrl;
+  }
+
   async function generate() {
     if (sources.length === 0 && !pdfContent) return;
     setGenerating(true);
     setError(null);
 
     try {
+      // Upload the raw PDF to storage so it can be linked from the article
+      let pdfUrl: string | null = null;
+      if (pdfFile) {
+        pdfUrl = await uploadPdfToStorage();
+      }
+
       const payload: Record<string, unknown> = { urls: sources, title, category };
       if (pdfContent) {
         payload.pdfContent = pdfContent;
         payload.pdfName = pdfFile?.name ?? "uploaded.pdf";
+        if (pdfUrl) {
+          payload.pdfUrl = pdfUrl;
+        }
       }
 
       const res = await fetch("/api/codex/generate", {
@@ -124,6 +144,11 @@ export default function AdminCodexPage() {
       setGeneratedContent(data.content);
       setGeneratedExcerpt(data.excerpt);
       setGeneratedTags(data.tags);
+
+      // Add the PDF as a source automatically
+      if (pdfUrl && pdfFile) {
+        setSources(prev => [...prev, { url: pdfUrl!, title: pdfFile!.name, type: "pdf" }]);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
     }
@@ -270,6 +295,7 @@ export default function AdminCodexPage() {
                   <option value="wiki">Wiki</option>
                   <option value="video">Video</option>
                   <option value="article">Article</option>
+                  <option value="pdf">PDF</option>
                 </select>
                 <button
                   type="button"

@@ -115,6 +115,33 @@ export default async function CodexArticlePage({ params }: CodexDetailProps) {
           className="codex-content"
           dangerouslySetInnerHTML={{ __html: contentHtml }}
         />
+
+        {(() => {
+          const pdfSource = sources.find(s => s.type === "pdf");
+          if (!pdfSource) return null;
+          return (
+            <div className="mt-8 border border-gold/20 bg-gold/5 p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-ui text-gold text-[10px] tracking-[0.2em] uppercase mb-1">
+                    Original Document
+                  </p>
+                  <p className="font-body text-text-mid text-sm">
+                    This article was generated from a PDF containing additional images, tables, and diagrams.
+                  </p>
+                </div>
+                <a
+                  href={pdfSource.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-ui text-[10px] tracking-[0.15em] uppercase border border-gold/30 text-gold px-4 py-2 hover:bg-gold/20 transition-colors shrink-0 ml-4"
+                >
+                  View PDF
+                </a>
+              </div>
+            </div>
+          );
+        })()}
       </article>
 
       {sources.length > 0 && (

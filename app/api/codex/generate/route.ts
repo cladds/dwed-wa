@@ -21,12 +21,13 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { urls, title, category, pdfContent, pdfName } = body as {
+  const { urls, title, category, pdfContent, pdfName, pdfUrl } = body as {
     urls: Array<{ url: string; title: string; type: string }>;
     title?: string;
     category: string;
     pdfContent?: string; // base64 encoded PDF
     pdfName?: string;
+    pdfUrl?: string; // public URL of hosted PDF
   };
 
   if ((!urls?.length && !pdfContent) || !category) {
@@ -81,6 +82,10 @@ export async function POST(request: Request) {
 
   if (pdfContent) {
     prompt += `\n\nThe attached PDF document "${pdfName ?? "uploaded document"}" is the primary source. Extract all key information, system names, character details, lore analysis, and investigation notes from it.`;
+    if (pdfUrl) {
+      prompt += `\n\nThe original PDF is hosted at: ${pdfUrl}\nIf the PDF contains images, tables, diagrams, or maps that cannot be conveyed in text, add a note directing readers to view the original PDF. For example: "See the original document for the full system data table and route maps."`;
+    }
+    prompt += `\n\nIMPORTANT: If the PDF contains tables, try to represent the key data in text form (e.g. system names with distances). If it contains images or diagrams that add important context, describe what they show and note that the full visuals are available in the original PDF document.`;
   }
 
   if (contents.length > 0) {
