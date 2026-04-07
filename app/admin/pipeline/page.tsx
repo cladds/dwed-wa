@@ -45,12 +45,30 @@ export default function PipelinePage() {
   }
 
   async function runGroup() {
+    let totalCreated = 0;
+    let totalUpdated = 0;
+    let totalGrouped = 0;
+    let pass = 0;
+
     addLog("group", "Grouping leads into theories...");
-    const res = await fetch("/api/pipeline/group", { method: "POST" });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error ?? "Grouping failed");
-    addLog("group", `Created ${data.theoriesCreated} new theories, updated ${data.theoriesUpdated ?? 0}, grouped ${data.leadsGrouped} leads (${data.totalTheories} total)`, true);
-    return data;
+
+    while (!abortRef.current) {
+      pass++;
+      const res = await fetch("/api/pipeline/group", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Grouping failed");
+
+      totalCreated += data.theoriesCreated;
+      totalUpdated += data.theoriesUpdated;
+      totalGrouped += data.leadsGrouped;
+
+      addLog("group", `Pass ${pass}: +${data.theoriesCreated} new, +${data.theoriesUpdated} updated, ${data.leadsGrouped} grouped (${data.remaining} remaining)`);
+
+      if (data.remaining === 0 || data.leadsGrouped === 0) break;
+    }
+
+    addLog("group", `Grouping complete: ${totalCreated} created, ${totalUpdated} updated, ${totalGrouped} leads grouped`, true);
+    return { theoriesCreated: totalCreated, theoriesUpdated: totalUpdated, leadsGrouped: totalGrouped };
   }
 
   async function runConsolidate() {
