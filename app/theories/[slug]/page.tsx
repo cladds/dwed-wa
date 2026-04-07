@@ -203,9 +203,32 @@ export default async function TheoryDetailPage({ params }: TheoryDetailProps) {
                 <span className="font-system text-text-dim text-xs">Forum posts</span>
                 <span className="font-system text-text-primary text-xs">{theory.source_post_count}</span>
               </div>
+              {(() => {
+                const dates = (linkedLeads ?? [])
+                  .map(l => l.forum_post?.posted_at)
+                  .filter(Boolean)
+                  .map(d => new Date(d!))
+                  .sort((a, b) => a.getTime() - b.getTime());
+                const earliest = dates[0];
+                const latest = dates[dates.length - 1];
+                return earliest ? (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="font-system text-text-dim text-xs">First post</span>
+                      <span className="font-system text-text-primary text-xs">{earliest.toLocaleDateString()}</span>
+                    </div>
+                    {latest && latest.getTime() !== earliest.getTime() && (
+                      <div className="flex justify-between">
+                        <span className="font-system text-text-dim text-xs">Latest post</span>
+                        <span className="font-system text-text-primary text-xs">{latest.toLocaleDateString()}</span>
+                      </div>
+                    )}
+                  </>
+                ) : null;
+              })()}
               <div className="flex justify-between">
-                <span className="font-system text-text-dim text-xs">Created</span>
-                <span className="font-system text-text-primary text-xs">{new Date(theory.created_at).toLocaleDateString()}</span>
+                <span className="font-system text-text-dim text-xs">Added to darkwheel</span>
+                <span className="font-system text-text-faint text-xs">{new Date(theory.created_at).toLocaleDateString()}</span>
               </div>
             </div>
           </div>
