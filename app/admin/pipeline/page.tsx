@@ -72,17 +72,11 @@ export default function PipelinePage() {
   }
 
   async function runConsolidate() {
-    addLog("consolidate", "Consolidating theories: merging duplicates, auto-prioritizing major investigations...");
+    addLog("consolidate", "Auto-prioritizing major theories by evidence count...");
     const res = await fetch("/api/pipeline/consolidate", { method: "POST" });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? "Consolidation failed");
-
-    const msg = `Merged ${data.merged} duplicate theories, auto-prioritized ${data.prioritized} major theories (${data.totalTheories} total)`;
-    if (data.mergeDetails?.length > 0) {
-      const details = data.mergeDetails.slice(0, 5).map((d: { kept: string; absorbed: string[] }) => `  "${d.kept}" absorbed ${d.absorbed.length} theories`).join("\n");
-      addLog("consolidate", details);
-    }
-    addLog("consolidate", msg, true);
+    addLog("consolidate", `Auto-prioritized ${data.prioritized} theories for corkboard (${data.totalTheories} total)`, true);
     return data;
   }
 
