@@ -2,19 +2,36 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 
-const STATUS_STYLES: Record<string, { label: string; color: string }> = {
-  confirmed: { label: "Confirmed", color: "border-status-success text-status-success" },
-  unconfirmed: { label: "Unconfirmed", color: "border-gold text-gold" },
-  debunked: { label: "Debunked", color: "border-status-danger text-status-danger" },
-  rumour: { label: "Rumour", color: "border-text-dim text-text-dim" },
+const STATUS_STYLES: Record<string, { label: string; color: string; borderColor: string }> = {
+  confirmed: { label: "Confirmed", color: "border-status-success text-status-success", borderColor: "border-status-success/30" },
+  unconfirmed: { label: "Unconfirmed", color: "border-gold text-gold", borderColor: "border-gold/30" },
+  debunked: { label: "Debunked", color: "border-status-danger text-status-danger", borderColor: "border-status-danger/30" },
+  rumour: { label: "Rumour", color: "border-text-dim text-text-dim", borderColor: "border-border" },
 };
 
 const SOURCE_TYPE_LABELS: Record<string, string> = {
-  developer: "Developer",
-  in_game: "In-Game",
-  novel: "Novel",
-  community: "Community",
+  developer: "Developer Statements",
+  in_game: "In-Game Sources",
+  novel: "Canonical Novels",
+  community: "Community Research",
 };
+
+const SOURCE_TYPE_ORDER = ["developer", "in_game", "novel", "community"];
+
+interface Fact {
+  id: string;
+  title: string;
+  description: string;
+  source_person: string | null;
+  source_type: string;
+  source_url: string | null;
+  source_date: string | null;
+  status: string;
+  sort_order: number;
+  systems_mentioned: string[];
+  created_at: string;
+  updated_at: string;
+}
 
 export default async function ConfirmedFactsPage() {
   const cookieStore = await cookies();
@@ -25,10 +42,18 @@ export default async function ConfirmedFactsPage() {
     .select("*")
     .order("sort_order", { ascending: true });
 
-  // Group by status
-  const confirmed = (facts ?? []).filter(f => f.status === "confirmed");
-  const debunked = (facts ?? []).filter(f => f.status === "debunked");
-  const rumours = (facts ?? []).filter(f => f.status === "rumour" || f.status === "unconfirmed");
+  const allFacts = (facts ?? []) as Fact[];
+  const confirmed = allFacts.filter(f => f.status === "confirmed");
+  const debunked = allFacts.filter(f => f.status === "debunked");
+  const rumours = allFacts.filter(f => f.status === "rumour" || f.status === "unconfirmed");
+
+  // Sub-group confirmed by source type
+  const confirmedByType: Record<string, Fact[]> = {};
+  for (const f of confirmed) {
+    const key = f.source_type;
+    if (!confirmedByType[key]) confirmedByType[key] = [];
+    confirmedByType[key].push(f);
+  }
 
   // Check if user can edit
   const { data: { user } } = await supabase.auth.getUser();
@@ -42,41 +67,35 @@ export default async function ConfirmedFactsPage() {
     canEdit = ["lead_investigator", "director"].includes(operative?.rank ?? "");
   }
 
-  function FactCard({ fact }: { fact: typeof confirmed[0] }) {
+  function FactCard({ fact }: { fact: Fact }) {
     const style = STATUS_STYLES[fact.status] ?? STATUS_STYLES.confirmed;
     return (
-      <Link href={`/codex/facts/${fact.id}`} className="block border border-border bg-bg-card p-5 hover:bg-bg-hover transition-colors group">
-        <div className="flex items-center gap-3 mb-3 flex-wrap">
-          <span className={`font-system text-[9px] tracking-wider uppercase border px-2 py-0.5 ${style.color}`}>
-            {style.label}
-          </span>
-          {fact.source_person && (
-            <span className="font-system text-text-faint text-[9px]">
-              {fact.source_person}
-            </span>
+      <Link href={`/codex/facts/${fact.id}`} className={`block border ${style.borderColor} bg-bg-card hover:bg-bg-hover transition-colors group`}>
+        <div className="p-4">
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
+            {fact.source_person && (
+              <span className="font-system text-text-faint text-[9px]">
+                {fact.source_person}
+              </span>
+            )}
+            {fact.source_date && (
+              <span className="font-system text-text-faint text-[9px]">
+                {fact.source_date}
+              </span>
+            )}
+          </div>
+          <h3 className="font-body text-text-primary text-sm mb-1.5 group-hover:text-gold transition-colors leading-snug">{fact.title}</h3>
+          <p className="font-body text-text-mid text-xs leading-relaxed line-clamp-2">{fact.description}</p>
+          {fact.source_url && (
+            <p className="font-system text-coord-blue text-[9px] mt-2">source</p>
           )}
-          {fact.source_date && (
-            <span className="font-system text-text-faint text-[9px]">
-              {fact.source_date}
-            </span>
-          )}
-          <span className="font-system text-text-faint text-[9px] bg-bg-hover px-2 py-0.5">
-            {SOURCE_TYPE_LABELS[fact.source_type] ?? fact.source_type}
-          </span>
         </div>
-        <h3 className="font-body text-text-primary text-base mb-2 group-hover:text-gold transition-colors">{fact.title}</h3>
-        <p className="font-body text-text-mid text-sm leading-relaxed line-clamp-3">{fact.description}</p>
-        {fact.source_url && (
-          <p className="font-system text-coord-blue text-[10px] mt-3">
-            Has source reference
-          </p>
-        )}
       </Link>
     );
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div>
       <div className="mb-6">
         <Link href="/codex" className="font-system text-text-dim text-xs hover:text-gold transition-colors">
           &lt; Back to Codex
@@ -102,35 +121,94 @@ export default async function ConfirmedFactsPage() {
         )}
       </div>
 
+      {/* Stats bar */}
+      <div className="grid grid-cols-3 gap-4 mb-8">
+        <div className="border border-status-success/20 bg-bg-card p-4 text-center">
+          <p className="font-system text-status-success text-2xl mb-1">{confirmed.length}</p>
+          <p className="font-ui text-text-dim text-[9px] tracking-[0.2em] uppercase">Confirmed</p>
+        </div>
+        <div className="border border-status-danger/20 bg-bg-card p-4 text-center">
+          <p className="font-system text-status-danger text-2xl mb-1">{debunked.length}</p>
+          <p className="font-ui text-text-dim text-[9px] tracking-[0.2em] uppercase">Debunked</p>
+        </div>
+        <div className="border border-border bg-bg-card p-4 text-center">
+          <p className="font-system text-text-dim text-2xl mb-1">{rumours.length}</p>
+          <p className="font-ui text-text-dim text-[9px] tracking-[0.2em] uppercase">Rumours</p>
+        </div>
+      </div>
+
+      {/* Confirmed facts grouped by source type */}
       {confirmed.length > 0 && (
         <div className="mb-10">
-          <h2 className="font-ui text-status-success text-[10px] tracking-[0.25em] uppercase mb-4 border-b border-border pb-2">
-            Confirmed ({confirmed.length})
-          </h2>
-          <div className="space-y-4">
-            {confirmed.map(f => <FactCard key={f.id} fact={f} />)}
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-2 h-2 bg-status-success" />
+            <h2 className="font-ui text-status-success text-[10px] tracking-[0.25em] uppercase">
+              Confirmed Facts ({confirmed.length})
+            </h2>
+            <div className="flex-1 border-b border-status-success/20" />
           </div>
+
+          {SOURCE_TYPE_ORDER.filter(t => confirmedByType[t]?.length).map(sourceType => (
+            <div key={sourceType} className="mb-8">
+              <div className="border border-border">
+                <div className="px-4 py-2.5 bg-bg-card border-b border-border">
+                  <h3 className="font-ui text-text-dim text-[9px] tracking-[0.25em] uppercase">
+                    {SOURCE_TYPE_LABELS[sourceType] ?? sourceType} ({confirmedByType[sourceType].length})
+                  </h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2">
+                  {confirmedByType[sourceType].map((f, i) => (
+                    <div key={f.id} className={`${i % 2 === 0 && confirmedByType[sourceType].length > 1 ? "md:border-r md:border-border" : ""} ${i < confirmedByType[sourceType].length - (confirmedByType[sourceType].length % 2 === 0 ? 2 : 1) ? "border-b border-border" : i === confirmedByType[sourceType].length - 2 && confirmedByType[sourceType].length % 2 === 0 ? "border-b border-border" : ""}`}>
+                      <FactCard fact={f} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
+      {/* Debunked */}
       {debunked.length > 0 && (
         <div className="mb-10">
-          <h2 className="font-ui text-status-danger text-[10px] tracking-[0.25em] uppercase mb-4 border-b border-border pb-2">
-            Debunked ({debunked.length})
-          </h2>
-          <div className="space-y-4">
-            {debunked.map(f => <FactCard key={f.id} fact={f} />)}
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-2 h-2 bg-status-danger" />
+            <h2 className="font-ui text-status-danger text-[10px] tracking-[0.25em] uppercase">
+              Debunked Claims ({debunked.length})
+            </h2>
+            <div className="flex-1 border-b border-status-danger/20" />
+          </div>
+          <div className="border border-status-danger/20">
+            <div className="grid grid-cols-1 md:grid-cols-2">
+              {debunked.map((f, i) => (
+                <div key={f.id} className={`${i % 2 === 0 && debunked.length > 1 ? "md:border-r md:border-border" : ""} ${i < debunked.length - 2 ? "border-b border-border" : ""}`}>
+                  <FactCard fact={f} />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
 
+      {/* Rumours */}
       {rumours.length > 0 && (
         <div className="mb-10">
-          <h2 className="font-ui text-text-dim text-[10px] tracking-[0.25em] uppercase mb-4 border-b border-border pb-2">
-            Unverified Rumours ({rumours.length})
-          </h2>
-          <div className="space-y-4">
-            {rumours.map(f => <FactCard key={f.id} fact={f} />)}
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-2 h-2 bg-text-dim" />
+            <h2 className="font-ui text-text-dim text-[10px] tracking-[0.25em] uppercase">
+              Unverified Rumours ({rumours.length})
+            </h2>
+            <div className="flex-1 border-b border-border" />
+          </div>
+          <div className="border border-border">
+            <div className="grid grid-cols-1 md:grid-cols-2">
+              {rumours.map((f, i) => (
+                <div key={f.id} className={`${i % 2 === 0 && rumours.length > 1 ? "md:border-r md:border-border" : ""} ${i < rumours.length - 2 ? "border-b border-border" : ""}`}>
+                  <FactCard fact={f} />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
