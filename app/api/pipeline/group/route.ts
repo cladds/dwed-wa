@@ -74,7 +74,7 @@ export async function POST() {
   let theoriesCreated = 0;
   let leadsGrouped = 0;
 
-  for (const [, theory] of allTheories) {
+  for (const theory of Array.from(allTheories.values())) {
     const slug = slugify(theory.title) + "-" + Date.now().toString(36);
     const { data: newTheory } = await supabase.from("theories").insert({
       title: theory.title, slug, summary: theory.summary, category: theory.category,
