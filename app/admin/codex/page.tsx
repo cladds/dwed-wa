@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import { ImageUpload } from "@/components/ui/ImageUpload";
 
 interface Source {
   url: string;
@@ -39,10 +40,36 @@ export default function AdminCodexPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Image uploads
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [coverImage, setCoverImage] = useState<string | null>(null);
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+
   // Generated content
   const [generatedContent, setGeneratedContent] = useState("");
   const [generatedExcerpt, setGeneratedExcerpt] = useState("");
   const [generatedTags, setGeneratedTags] = useState<string[]>([]);
+
+  const handleImageUpload = useCallback((url: string) => {
+    setUploadedImages((prev) => [...prev, url]);
+  }, []);
+
+  function copyMarkdown(url: string, index: number) {
+    const md = `![image](${url})`;
+    navigator.clipboard.writeText(md);
+    setCopiedIndex(index);
+    setTimeout(() => setCopiedIndex(null), 2000);
+  }
+
+  function setAsCover(url: string) {
+    setCoverImage(url);
+  }
+
+  function removeImage(index: number) {
+    const url = uploadedImages[index];
+    setUploadedImages((prev) => prev.filter((_, i) => i !== index));
+    if (coverImage === url) setCoverImage(null);
+  }
 
   function handlePdfUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -116,6 +143,7 @@ export default function AdminCodexPage() {
       sources,
       tags: generatedTags,
       published: true,
+      cover_image: coverImage,
     });
 
     if (insertError) {
@@ -252,6 +280,80 @@ export default function AdminCodexPage() {
                 </button>
               </div>
             </div>
+          </div>
+
+          <div className="border border-border bg-bg-card p-5 space-y-4">
+            <h3 className="font-ui text-text-dim text-[10px] tracking-[0.25em] uppercase">
+              Upload Images
+            </h3>
+
+            <ImageUpload onUpload={handleImageUpload} />
+
+            {coverImage && (
+              <div className="border border-gold/30 bg-gold/5 px-3 py-2">
+                <p className="font-system text-gold text-[9px] tracking-[0.15em] uppercase mb-2">
+                  Cover Image
+                </p>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={coverImage}
+                  alt="Cover"
+                  className="max-h-24 border border-border opacity-80"
+                />
+                <button
+                  onClick={() => setCoverImage(null)}
+                  className="font-system text-text-faint text-[9px] hover:text-status-danger mt-2 cursor-pointer"
+                >
+                  remove cover
+                </button>
+              </div>
+            )}
+
+            {uploadedImages.length > 0 && (
+              <div className="space-y-2">
+                <p className="font-system text-text-faint text-[9px] tracking-[0.15em] uppercase">
+                  Uploaded ({uploadedImages.length})
+                </p>
+                {uploadedImages.map((url, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-2 bg-bg-deep border border-border px-3 py-2"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={url}
+                      alt={`Upload ${i + 1}`}
+                      className="w-8 h-8 object-cover border border-border flex-shrink-0"
+                    />
+                    <span className="font-system text-text-faint text-[9px] flex-1 truncate">
+                      {url.split("/").pop()}
+                    </span>
+                    <button
+                      onClick={() => copyMarkdown(url, i)}
+                      className="font-system text-[9px] tracking-[0.1em] uppercase text-gold hover:text-gold/80 cursor-pointer flex-shrink-0"
+                    >
+                      {copiedIndex === i ? "copied" : "copy md"}
+                    </button>
+                    <button
+                      onClick={() => setAsCover(url)}
+                      className={`font-system text-[9px] tracking-[0.1em] uppercase cursor-pointer flex-shrink-0 ${
+                        coverImage === url
+                          ? "text-status-success"
+                          : "text-text-faint hover:text-gold"
+                      }`}
+                    >
+                      {coverImage === url ? "cover" : "set cover"}
+                    </button>
+                    <button
+                      onClick={() => removeImage(i)}
+                      className="text-text-faint hover:text-status-danger text-xs cursor-pointer flex-shrink-0"
+                    >
+                      x
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <button

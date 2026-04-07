@@ -45,9 +45,21 @@ export default async function CodexArticlePage({ params }: CodexDetailProps) {
     }
   }
 
+  const imageRegex = /^!\[([^\]]*)\]\(([^)]+)\)$/;
+
   for (const line of lines) {
     const trimmed = line.trim();
-    if (trimmed.startsWith("### ")) {
+    const imageMatch = trimmed.match(imageRegex);
+    if (imageMatch) {
+      flushParagraph();
+      const alt = imageMatch[1] || "Article image";
+      const src = imageMatch[2];
+      htmlParts.push(
+        `<figure class="my-6"><img src="${src}" alt="${alt}" class="max-w-full border border-border opacity-90" />${
+          imageMatch[1] ? `<figcaption class="font-system text-text-faint text-[9px] mt-2 tracking-wide">${alt}</figcaption>` : ""
+        }</figure>`
+      );
+    } else if (trimmed.startsWith("### ")) {
       flushParagraph();
       htmlParts.push(`<h3 class="font-ui text-gold text-base tracking-wide mt-8 mb-3 uppercase">${trimmed.slice(4)}</h3>`);
     } else if (trimmed.startsWith("## ")) {
