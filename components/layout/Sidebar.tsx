@@ -22,6 +22,7 @@ const navGroups = [
       { href: "/theories?source=forum", label: "Forum Theories", icon: "▦" },
       { href: "/codex", label: "The Codex", icon: "▤" },
       { href: "/codex/facts", label: "What We Know", icon: "◈" },
+      { href: "/codex/sources", label: "Sources", icon: "⊕" },
     ],
   },
   {
