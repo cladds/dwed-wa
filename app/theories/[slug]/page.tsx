@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { TheoryComments } from "@/components/theories/TheoryComments";
 import { TheoryStatusControl } from "@/components/theories/TheoryStatusControl";
+import { TheoryMerge } from "@/components/theories/TheoryMerge";
 
 const STATUS_LABELS: Record<string, string> = {
   open_lead: "Open Lead",
@@ -249,7 +250,10 @@ export default async function TheoryDetailPage({ params }: TheoryDetailProps) {
             </div>
           </div>
           {canManageStatus && (
-            <TheoryStatusControl theoryId={theory.id} currentStatus={theory.status} />
+            <>
+              <TheoryStatusControl theoryId={theory.id} currentStatus={theory.status} />
+              <TheoryMerge currentTheoryId={theory.id} />
+            </>
           )}
         </div>
       </div>

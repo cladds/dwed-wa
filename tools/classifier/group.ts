@@ -72,16 +72,20 @@ ${existingText}
 UNGROUPED LEADS:
 ${leadsText}
 
-Group these leads into theories. Each theory groups related leads that investigate the same topic, location, or hypothesis.
+Group these leads into theories. Be VERY aggressive about merging. If leads share the same broad topic, system, or investigation angle, they belong together.
+
+Examples of leads that MUST be merged:
+- "Raxxla access via permits" + "Raxxla locked behind conditions" = one theory about access mechanisms
+- "Dark Wheel missions in system X" + "Dark Wheel missions in system Y" = one theory about Dark Wheel missions
+- Any lore references about the same topic = one theory
 
 Rules:
-- If a lead matches an existing theory, assign it there (use the exact existing title)
-- If multiple leads are about the same topic, group them into one NEW theory
+- If a lead could fit an existing theory, assign it there (use the exact existing title)
+- Aim for BROAD umbrella theories, not narrow specific ones
+- 5-15 theories total is ideal, not 50 separate ones
 - Give each new theory a clear, concise title (max 60 chars)
 - Choose a category: theory | system | lore | mechanic | evidence
 - Write a 1-2 sentence summary that synthesizes all grouped leads
-- Leads that are truly unique get their own theory
-- Merge aggressively -- prefer fewer theories with more leads over many single-lead theories
 
 Return JSON:
 \`\`\`json

@@ -83,11 +83,18 @@ ${existingText}
 UNGROUPED LEADS:
 ${leadsText}
 
-Group related leads into theories. If a lead matches an existing theory, assign it there (exact title). Otherwise create a new theory grouping similar leads.
+Group related leads into theories. Be VERY aggressive about merging. If leads share the same broad topic, system, or investigation angle, they belong together.
+
+Examples of leads that MUST be merged:
+- "Raxxla access via permits" + "Raxxla locked behind conditions" = one theory about access mechanisms
+- "Dark Wheel missions in system X" + "Dark Wheel missions in system Y" = one theory about Dark Wheel missions
+- "Lore reference to Raxxla protection" + "Raxxla guarded by residents" = one theory about Raxxla secrecy
 
 Rules:
-- Merge aggressively: prefer fewer theories with more leads
-- Each new theory needs: title (max 60 chars), category (theory|system|lore|mechanic|evidence), summary (1-2 sentences synthesizing the grouped leads)
+- If a lead could fit an existing theory, assign it there (use exact existing title)
+- Aim for BROAD umbrella theories, not narrow specific ones
+- 5-15 theories total is ideal, not 50 separate ones
+- Each new theory needs: title (max 60 chars), category (theory|system|lore|mechanic|evidence), summary (1-2 sentences)
 - For existing theories, set is_existing: true with the exact title
 
 Return JSON array:
