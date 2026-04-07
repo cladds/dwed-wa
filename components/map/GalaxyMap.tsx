@@ -214,7 +214,8 @@ export function GalaxyMap({ systems, zones }: GalaxyMapProps) {
 
   const handleClick = () => {
     if (hoveredSystem) {
-      window.location.href = `/systems/${hoveredSystem.id}`;
+      // Search for theories mentioning this system
+      window.location.href = `/theories?q=${encodeURIComponent(hoveredSystem.name)}`;
     }
   };
 

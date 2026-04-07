@@ -31,13 +31,14 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 interface TheoriesPageProps {
-  searchParams: { source?: string };
+  searchParams: { source?: string; q?: string };
 }
 
 export default async function TheoriesPage({ searchParams }: TheoriesPageProps) {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
   const source = searchParams.source ?? "all";
+  const searchQuery = searchParams.q ?? "";
 
   let query = supabase
     .from("theories")
@@ -46,6 +47,7 @@ export default async function TheoriesPage({ searchParams }: TheoriesPageProps) 
 
   if (source === "open") query = query.eq("source", "open");
   if (source === "forum") query = query.eq("source", "forum");
+  if (searchQuery) query = query.contains("systems_mentioned", [searchQuery]);
 
   const { data: theories } = await query;
 
