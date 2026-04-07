@@ -43,13 +43,15 @@ export async function POST() {
   const toFetch = Array.from(allSystems).filter(s => !existingNames.has(s.toLowerCase()));
 
   if (toFetch.length === 0) {
-    return NextResponse.json({ populated: 0, message: "All systems already cached" });
+    return NextResponse.json({ populated: 0, remaining: 0, message: "All systems already cached" });
   }
 
   let populated = 0;
+  let attempted = 0;
 
   // Fetch from EDSM (max 5 per request to stay under Netlify timeout)
   for (const systemName of toFetch.slice(0, 5)) {
+    attempted++;
     try {
       const params = new URLSearchParams({
         systemName,
@@ -58,10 +60,24 @@ export async function POST() {
       });
 
       const res = await fetch(`https://www.edsm.net/api-v1/system?${params}`);
-      if (!res.ok) continue;
+      if (!res.ok) {
+        // Cache as not found so we don't retry
+        await supabase.from("system_cache").upsert({
+          system_name: systemName, edsm_id: "", id64: "",
+          coord_x: 0, coord_y: 0, coord_z: 0, fetched_at: new Date().toISOString(),
+        }, { onConflict: "system_name" }).then(() => {});
+        continue;
+      }
 
       const data = await res.json();
-      if (!data?.name || !data?.coords) continue;
+      if (!data?.name || !data?.coords) {
+        // Cache as not found
+        await supabase.from("system_cache").upsert({
+          system_name: systemName, edsm_id: "", id64: "",
+          coord_x: 0, coord_y: 0, coord_z: 0, fetched_at: new Date().toISOString(),
+        }, { onConflict: "system_name" }).then(() => {});
+        continue;
+      }
 
       await supabase.from("system_cache").upsert({
         system_name: data.name,
@@ -87,5 +103,5 @@ export async function POST() {
     }
   }
 
-  return NextResponse.json({ populated, remaining: Math.max(0, toFetch.length - 5) });
+  return NextResponse.json({ populated, attempted, remaining: Math.max(0, toFetch.length - attempted) });
 }

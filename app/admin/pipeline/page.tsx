@@ -98,8 +98,8 @@ export default function PipelinePage() {
 
       totalPopulated += data.populated;
 
-      if (data.remaining === 0 || data.populated === 0) break;
-      addLog("populate", `Pass ${pass}: ${data.populated} systems fetched (${data.remaining} remaining)`);
+      if (data.remaining === 0) break;
+      addLog("populate", `Pass ${pass}: ${data.populated} found of ${data.attempted ?? 5} tried (${data.remaining} remaining)`);
     }
 
     addLog("populate", `Populated ${totalPopulated} system coordinates`, true);
