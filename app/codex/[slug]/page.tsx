@@ -2,6 +2,8 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
+import { CodexComments } from "@/components/codex/CodexComments";
+import { CodexEditButton } from "@/components/codex/CodexEditButton";
 
 interface Source {
   url: string;
@@ -80,9 +82,12 @@ export default async function CodexArticlePage({ params }: CodexDetailProps) {
       )}
 
       <article>
-        <h1 className="font-heading text-2xl text-gold tracking-wide mb-2">
-          {article.title}
-        </h1>
+        <div className="flex items-center justify-between mb-2">
+          <h1 className="font-heading text-2xl text-gold tracking-wide">
+            {article.title}
+          </h1>
+          <CodexEditButton slug={article.slug} />
+        </div>
 
         {article.tags && article.tags.length > 0 && (
           <div className="flex gap-2 mb-6 flex-wrap">
@@ -131,6 +136,8 @@ export default async function CodexArticlePage({ params }: CodexDetailProps) {
           Last updated: {new Date(article.updated_at).toLocaleDateString()}
         </p>
       </div>
+
+      <CodexComments articleId={article.id} />
     </div>
   );
 }

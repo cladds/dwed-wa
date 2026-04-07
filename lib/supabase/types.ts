@@ -508,6 +508,33 @@ export interface Database {
         };
         Relationships: [];
       };
+      codex_comments: {
+        Row: {
+          id: string;
+          article_id: string;
+          content: string;
+          author_id: string | null;
+          author_name: string;
+          created_at: string;
+        };
+        Insert: {
+          article_id: string;
+          content: string;
+          author_name: string;
+          id?: string;
+          author_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          article_id?: string;
+          content?: string;
+          author_name?: string;
+          id?: string;
+          author_id?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       codex_articles: {
         Row: {
           id: string;

@@ -71,21 +71,44 @@ export default async function TheoriesPage({ searchParams }: TheoriesPageProps) 
         </Link>
       </div>
 
-      <div className="flex gap-1 mb-6">
-        {tabs.map((tab) => (
-          <Link
-            key={tab.key}
-            href={tab.key === "all" ? "/theories" : `/theories?source=${tab.key}`}
-            className={`font-ui text-[10px] tracking-[0.15em] uppercase px-4 py-2 border transition-colors ${
-              source === tab.key || (tab.key === "all" && source === "all")
-                ? "border-gold/40 bg-gold/10 text-gold"
-                : "border-border text-text-dim hover:text-text-primary hover:bg-bg-hover"
-            }`}
-          >
-            {tab.label}
-          </Link>
-        ))}
+      <div className="flex items-center gap-4 mb-6">
+        <div className="flex gap-1">
+          {tabs.map((tab) => (
+            <Link
+              key={tab.key}
+              href={tab.key === "all" ? "/theories" : `/theories?source=${tab.key}`}
+              className={`font-ui text-[10px] tracking-[0.15em] uppercase px-4 py-2 border transition-colors ${
+                source === tab.key || (tab.key === "all" && source === "all")
+                  ? "border-gold/40 bg-gold/10 text-gold"
+                  : "border-border text-text-dim hover:text-text-primary hover:bg-bg-hover"
+              }`}
+            >
+              {tab.label}
+            </Link>
+          ))}
+        </div>
+
+        <form action="/theories" method="GET" className="flex-1 max-w-xs">
+          <input
+            name="q"
+            defaultValue={searchQuery}
+            placeholder="Search systems or theories..."
+            className="w-full bg-bg-deep border border-border px-4 py-2 font-system text-text-primary text-sm focus:border-gold/50 focus:outline-none"
+          />
+          {source !== "all" && <input type="hidden" name="source" value={source} />}
+        </form>
       </div>
+
+      {searchQuery && (
+        <div className="flex items-center gap-3 mb-4 px-4 py-2 bg-gold/5 border border-gold/20">
+          <p className="font-system text-gold text-xs">
+            Filtered by system: {searchQuery}
+          </p>
+          <Link href="/theories" className="font-system text-text-faint text-[9px] hover:text-gold">
+            Clear filter
+          </Link>
+        </div>
+      )}
 
       {theories && theories.length > 0 ? (
         <div className="space-y-3">
