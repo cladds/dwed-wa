@@ -45,7 +45,7 @@ export default async function TheoriesPage({ searchParams }: TheoriesPageProps) 
     .select("*")
     .order("updated_at", { ascending: false });
 
-  if (source === "open") query = query.eq("source", "open");
+  if (source === "open") query = query.eq("status", "open_lead");
   if (source === "forum") query = query.eq("source", "forum");
   if (searchQuery) query = query.contains("systems_mentioned", [searchQuery]);
 
