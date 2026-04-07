@@ -52,7 +52,7 @@ export default function RootLayout({
       >
         <Sidebar />
         <Header />
-        <main className="ml-[240px] mt-14 p-6">
+        <main className="ml-0 md:ml-[240px] mt-14 p-4 md:p-6">
           {children}
         </main>
       </body>

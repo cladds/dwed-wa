@@ -45,33 +45,35 @@ export function Header() {
   }, [supabase]);
 
   return (
-    <header className="fixed top-0 left-[240px] right-0 h-14 bg-bg-card border-b border-border z-30 flex items-center justify-between px-6">
+    <header className="fixed top-0 left-0 md:left-[240px] right-0 h-14 bg-bg-card border-b border-border z-30 flex items-center justify-between px-4 md:px-6">
       <div className="flex items-center gap-4">
-        <h2 className="font-system text-text-dim text-xs tracking-widest uppercase">
+        {/* Spacer for mobile hamburger button */}
+        <div className="w-8 md:hidden" />
+        <h2 className="font-system text-text-dim text-xs tracking-widest uppercase hidden sm:block">
           Operations Desk
         </h2>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 md:gap-4">
         {user ? (
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
             <Link
               href="/profile"
-              className="flex items-center gap-3 px-3 py-1.5 bg-bg-hover border border-border hover:border-gold/30 transition-colors"
+              className="flex items-center gap-2 md:gap-3 px-2 md:px-3 py-1.5 bg-bg-hover border border-border hover:border-gold/30 transition-colors"
             >
               <div className="w-2 h-2 bg-status-success" />
               <div>
-                <p className="font-system text-gold text-xs leading-tight">
+                <p className="font-system text-gold text-[10px] md:text-xs leading-tight truncate max-w-[80px] md:max-w-none">
                   {user.user_metadata.full_name ?? "CMDR"}
                 </p>
-                <p className="font-system text-text-faint text-[9px] tracking-wider uppercase">
+                <p className="font-system text-text-faint text-[8px] md:text-[9px] tracking-wider uppercase">
                   {RANK_LABELS[rank] ?? rank}
                 </p>
               </div>
             </Link>
             <button
               onClick={() => signOut()}
-              className="font-ui text-text-faint text-[10px] tracking-[0.15em] uppercase border border-border px-3 py-1.5 hover:text-status-danger hover:border-status-danger transition-colors cursor-pointer"
+              className="font-ui text-text-faint text-[9px] md:text-[10px] tracking-[0.15em] uppercase border border-border px-2 md:px-3 py-1.5 hover:text-status-danger hover:border-status-danger transition-colors cursor-pointer hidden sm:block"
             >
               Disconnect
             </button>

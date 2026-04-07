@@ -95,9 +95,9 @@ export default async function Home() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-4">
-          <Image src="/logo.svg" alt="" width={36} height={36} />
+          <Image src="/logo.svg" alt="" width={36} height={36} className="hidden sm:block" />
           <div>
             <h1 className="font-heading text-xl text-gold tracking-wide">
               darkwheel.space
@@ -107,16 +107,16 @@ export default async function Home() {
             </p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 w-full sm:w-auto">
           <Link
             href="/submit/theory"
-            className="font-ui text-[10px] tracking-[0.15em] uppercase bg-gold/10 border border-gold/30 text-gold px-4 py-2 hover:bg-gold/20 transition-colors"
+            className="font-ui text-[10px] tracking-[0.15em] uppercase bg-gold/10 border border-gold/30 text-gold px-4 py-2 hover:bg-gold/20 transition-colors flex-1 sm:flex-none text-center"
           >
             + New Theory
           </Link>
           <Link
             href="/submit/system"
-            className="font-ui text-[10px] tracking-[0.15em] uppercase border border-border text-text-mid px-4 py-2 hover:bg-bg-hover transition-colors"
+            className="font-ui text-[10px] tracking-[0.15em] uppercase border border-border text-text-mid px-4 py-2 hover:bg-bg-hover transition-colors flex-1 sm:flex-none text-center"
           >
             + Coordinates
           </Link>

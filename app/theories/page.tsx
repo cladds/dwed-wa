@@ -71,8 +71,8 @@ export default async function TheoriesPage({ searchParams }: TheoriesPageProps) 
         </Link>
       </div>
 
-      <div className="flex items-center gap-4 mb-6">
-        <div className="flex gap-1">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
+        <div className="flex gap-1 flex-wrap">
           {tabs.map((tab) => (
             <Link
               key={tab.key}
@@ -88,7 +88,7 @@ export default async function TheoriesPage({ searchParams }: TheoriesPageProps) 
           ))}
         </div>
 
-        <form action="/theories" method="GET" className="flex-1 max-w-xs">
+        <form action="/theories" method="GET" className="w-full sm:flex-1 sm:max-w-xs">
           <input
             name="q"
             defaultValue={searchQuery}
