@@ -14,6 +14,7 @@ interface TheoryNode {
   w: number;
   h: number;
   evidenceCount: number;
+  priority: number;
 }
 
 interface TheoryLink {
@@ -45,6 +46,7 @@ interface CorkboardProps {
     category: string;
     slug: string;
     evidence_count: number;
+    priority: number;
   }>;
   links: Array<{
     id: string;
@@ -69,6 +71,7 @@ export function Corkboard({ theories, links, canEdit }: CorkboardProps) {
       category: t.category,
       slug: t.slug,
       evidenceCount: t.evidence_count,
+      priority: t.priority ?? 0,
       x: 80 + (i % cols) * (CARD_W + 60),
       y: 80 + Math.floor(i / cols) * (CARD_H + 80),
       w: CARD_W,
@@ -226,9 +229,10 @@ export function Corkboard({ theories, links, canEdit }: CorkboardProps) {
       ctx.fillStyle = "#8a5c28";
       ctx.fillText(`${node.category.toUpperCase()} | ${node.status.replace(/_/g, " ")}`, sx + 10 * camera.zoom, sy + 40 * camera.zoom);
 
-      // Evidence count
+      // Evidence count + priority
       ctx.fillStyle = "#5a3c18";
-      ctx.fillText(`${node.evidenceCount} evidence`, sx + 10 * camera.zoom, sy + 56 * camera.zoom);
+      const priorityLabel = node.priority > 0 ? ` | P${node.priority}` : "";
+      ctx.fillText(`${node.evidenceCount} evidence${priorityLabel}`, sx + 10 * camera.zoom, sy + 56 * camera.zoom);
 
       // Pin in top-right
       ctx.beginPath();

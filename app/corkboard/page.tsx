@@ -1,15 +1,18 @@
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { Corkboard } from "@/components/corkboard/Corkboard";
+import { CorkboardAddTheory } from "@/components/corkboard/CorkboardAddTheory";
 
 export default async function CorkboardPage() {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
 
+  // Only show major theories: pinned (priority > 0), active investigation, or well-evidenced
   const { data: theories } = await supabase
     .from("theories")
-    .select("id, title, status, category, slug, evidence_count")
-    .order("evidence_count", { ascending: false });
+    .select("id, title, status, category, slug, evidence_count, priority")
+    .or("priority.gt.0,status.in.(under_investigation,promising,verified),evidence_count.gte.3")
+    .order("priority", { ascending: false });
 
   const { data: links } = await supabase
     .from("theory_links")
@@ -33,11 +36,14 @@ export default async function CorkboardPage() {
         <h1 className="font-heading text-xl text-gold tracking-wide">
           Corkboard
         </h1>
-        <p className="font-system text-text-dim text-xs">
-          Theory connections and investigation threads
-        </p>
+        <div className="flex items-center gap-4">
+          <p className="font-system text-text-dim text-xs hidden sm:block">
+            Theory connections and investigation threads
+          </p>
+          {canEdit && <CorkboardAddTheory existingIds={(theories ?? []).map(t => t.id)} />}
+        </div>
       </div>
-      <div className="border border-border bg-bg-card" style={{ height: "calc(100vh - 160px)" }}>
+      <div className="relative border border-border bg-bg-card" style={{ height: "calc(100vh - 160px)" }}>
         <Corkboard theories={theories ?? []} links={links ?? []} canEdit={canEdit} />
       </div>
     </div>

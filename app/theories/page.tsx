@@ -137,6 +137,11 @@ export default async function TheoriesPage({ searchParams }: TheoriesPageProps) 
                       {t.source_post_count} posts
                     </span>
                   )}
+                  {t.priority > 0 && (
+                    <span className="font-system text-gold text-[9px] bg-gold/10 px-2 py-0.5">
+                      P{t.priority}
+                    </span>
+                  )}
                 </div>
                 <h2 className="font-body text-text-primary text-base mb-1">{t.title}</h2>
                 <p className="font-body text-text-mid text-sm line-clamp-2">{t.summary}</p>

@@ -340,6 +340,7 @@ export interface Database {
           created_by: string | null;
           original_author: string | null;
           source_url: string | null;
+          priority: number;
           created_at: string;
           updated_at: string;
         };
@@ -354,6 +355,7 @@ export interface Database {
           systems_mentioned?: string[];
           evidence_count?: number;
           source_post_count?: number;
+          priority?: number;
           created_by?: string | null;
           original_author?: string | null;
           source_url?: string | null;
@@ -371,6 +373,7 @@ export interface Database {
           systems_mentioned?: string[];
           evidence_count?: number;
           source_post_count?: number;
+          priority?: number;
           created_by?: string | null;
           original_author?: string | null;
           source_url?: string | null;
@@ -607,6 +610,75 @@ export interface Database {
           created_by?: string | null;
           created_at?: string;
           updated_at?: string;
+        };
+        Relationships: [];
+      };
+      confirmed_facts: {
+        Row: {
+          id: string;
+          title: string;
+          description: string;
+          source_person: string | null;
+          source_type: "developer" | "in_game" | "novel" | "community" | "debunked";
+          source_url: string | null;
+          source_date: string | null;
+          status: "confirmed" | "unconfirmed" | "debunked" | "rumour";
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          title: string;
+          description: string;
+          source_person?: string | null;
+          source_type?: string;
+          source_url?: string | null;
+          source_date?: string | null;
+          status?: string;
+          sort_order?: number;
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          title?: string;
+          description?: string;
+          source_person?: string | null;
+          source_type?: string;
+          source_url?: string | null;
+          source_date?: string | null;
+          status?: string;
+          sort_order?: number;
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      theory_fact_links: {
+        Row: {
+          id: string;
+          theory_id: string;
+          fact_id: string;
+          relationship: "supports" | "contradicts" | "neutral";
+          notes: string | null;
+          created_at: string;
+        };
+        Insert: {
+          theory_id: string;
+          fact_id: string;
+          relationship: string;
+          notes?: string | null;
+          id?: string;
+          created_at?: string;
+        };
+        Update: {
+          theory_id?: string;
+          fact_id?: string;
+          relationship?: string;
+          notes?: string | null;
+          id?: string;
+          created_at?: string;
         };
         Relationships: [];
       };

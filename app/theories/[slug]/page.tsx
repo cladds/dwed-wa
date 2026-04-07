@@ -5,6 +5,8 @@ import { notFound } from "next/navigation";
 import { TheoryComments } from "@/components/theories/TheoryComments";
 import { TheoryStatusControl } from "@/components/theories/TheoryStatusControl";
 import { TheoryMerge } from "@/components/theories/TheoryMerge";
+import { TheoryPriority } from "@/components/theories/TheoryPriority";
+import { TheoryFactCheck } from "@/components/theories/TheoryFactCheck";
 
 const STATUS_LABELS: Record<string, string> = {
   open_lead: "Open Lead",
@@ -249,8 +251,11 @@ export default async function TheoryDetailPage({ params }: TheoryDetailProps) {
               </div>
             </div>
           </div>
+          <TheoryFactCheck theoryId={theory.id} canEdit={canManageStatus} />
+
           {canManageStatus && (
             <>
+              <TheoryPriority theoryId={theory.id} currentPriority={theory.priority ?? 0} />
               <TheoryStatusControl theoryId={theory.id} currentStatus={theory.status} />
               <TheoryMerge currentTheoryId={theory.id} />
             </>

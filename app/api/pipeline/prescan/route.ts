@@ -4,18 +4,29 @@ import { createClient } from "@/lib/supabase/server";
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const BATCH_SIZE = 30;
-const MAX_BATCHES = 50; // Safety cap per request
+const MAX_BATCHES = 200; // Enough for ~6000 posts per request
 
-export async function POST() {
+export async function POST(req: Request) {
   if (!ANTHROPIC_API_KEY) return NextResponse.json({ error: "ANTHROPIC_API_KEY not set" }, { status: 500 });
 
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
 
+  // Check how many unprocessed posts remain
+  const { count: remaining } = await supabase
+    .from("forum_posts")
+    .select("id", { count: "exact", head: true })
+    .eq("ai_processed", false);
+
+  // Allow caller to limit batches (for partial runs)
+  const url = new URL(req.url);
+  const maxBatches = Math.min(Number(url.searchParams.get("max") ?? MAX_BATCHES), MAX_BATCHES);
+
   let totalProcessed = 0;
   let totalExtracted = 0;
+  let batchNum = 0;
 
-  for (let batch = 0; batch < MAX_BATCHES; batch++) {
+  for (let batch = 0; batch < maxBatches; batch++) {
     const { data: posts } = await supabase
       .from("forum_posts")
       .select("id, forum_post_id, author_name, content_text, posted_at, page_number, post_number")
@@ -24,9 +35,17 @@ export async function POST() {
       .limit(BATCH_SIZE);
 
     if (!posts || posts.length === 0) break;
+    batchNum++;
 
     const postsText = posts.map((p, i) => {
-      const content = p.content_text.length > 1500 ? p.content_text.substring(0, 1500) + "\n[...truncated]" : p.content_text;
+      // Strip quoted text and signatures more aggressively
+      let content = p.content_text;
+      // Remove "Username said:" quoted blocks
+      content = content.replace(/^.*? said:[\s\S]*?(?=\n[A-Z]|\n\n)/gm, "");
+      // Remove signature blocks
+      content = content.replace(/---[\s\S]*$/m, "");
+      // Truncate
+      content = content.length > 1200 ? content.substring(0, 1200) + "\n[...truncated]" : content;
       return `--- POST ${i + 1} ---\nid: ${p.forum_post_id} | ${p.author_name} | p.${p.page_number} #${p.post_number ?? "?"}\n${content}`;
     }).join("\n\n");
 
@@ -37,8 +56,33 @@ export async function POST() {
         body: JSON.stringify({
           model: "claude-haiku-4-5-20251001",
           max_tokens: 4096,
-          system: "You extract investigation leads from Elite Dangerous Raxxla forum posts. Be selective: skip casual chat. Only extract posts with theories, system names, evidence, or lore analysis.",
-          messages: [{ role: "user", content: `Extract leads. Return JSON: [{"forum_post_id":"id","items":[{"lead_type":"theory|system|evidence|lore|mechanic","title":"short","summary":"1-3 sentences","systems_mentioned":["System"],"confidence":"low|medium|high"}]}]\n\nPosts:\n${postsText}` }],
+          system: `You extract investigation leads from Elite Dangerous Raxxla forum posts. Be selective: skip casual chat, "I agree" posts, off-topic discussion, and posts that just quote others without adding anything new.
+
+Strip out:
+- Quoted text from other users
+- Forum signatures
+- Broken image/media references
+
+Only extract posts with: original theories, specific system names with reasoning, evidence analysis, lore connections, game mechanic discoveries, or developer/author clue analysis.
+
+For each extracted item, assign a broad theory group from these known categories:
+- Raxxla Location Theories
+- Dark Wheel Faction & Missions
+- Witchspace & Hyperspace Anomalies
+- Lore & Developer Clues
+- Permit-Locked Systems
+- Game Mechanics & Scanning
+- Constellation & Star Patterns
+- Formidine Rift & Generation Ships
+- Codex & Listening Posts
+- The Club & Powerplay
+- Historical Expeditions & Findings
+
+Reuse these names. Only create a new group if it genuinely doesn't fit any existing one.`,
+          messages: [{ role: "user", content: `Extract leads from these forum posts. Return JSON array:
+[{"forum_post_id":"id","items":[{"lead_type":"theory|system|evidence|lore|mechanic","title":"short title max 80 chars","summary":"1-3 sentences of the actual finding, not meta-commentary","systems_mentioned":["System"],"confidence":"low|medium|high","group":"Broad Theory Group Name"}]}]
+
+Skip posts with no substantive content. Posts:\n${postsText}` }],
         }),
       });
 
@@ -71,10 +115,22 @@ export async function POST() {
       await supabase.from("forum_posts").update({ ai_processed: true, ai_processed_at: new Date().toISOString() }).in("id", posts.map(p => p.id));
       totalProcessed += posts.length;
     } catch {
+      // Mark as processed to avoid infinite loops on bad posts
       await supabase.from("forum_posts").update({ ai_processed: true, ai_processed_at: new Date().toISOString() }).in("id", posts.map(p => p.id));
       totalProcessed += posts.length;
     }
   }
 
-  return NextResponse.json({ processed: totalProcessed, extracted: totalExtracted });
+  const { count: stillRemaining } = await supabase
+    .from("forum_posts")
+    .select("id", { count: "exact", head: true })
+    .eq("ai_processed", false);
+
+  return NextResponse.json({
+    processed: totalProcessed,
+    extracted: totalExtracted,
+    batches: batchNum,
+    remaining: stillRemaining ?? 0,
+    startedWith: remaining ?? 0,
+  });
 }
