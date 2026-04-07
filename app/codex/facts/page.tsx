@@ -45,8 +45,8 @@ export default async function ConfirmedFactsPage() {
   function FactCard({ fact }: { fact: typeof confirmed[0] }) {
     const style = STATUS_STYLES[fact.status] ?? STATUS_STYLES.confirmed;
     return (
-      <div className="border border-border bg-bg-card p-5">
-        <div className="flex items-center gap-3 mb-3">
+      <Link href={`/codex/facts/${fact.id}`} className="block border border-border bg-bg-card p-5 hover:bg-bg-hover transition-colors group">
+        <div className="flex items-center gap-3 mb-3 flex-wrap">
           <span className={`font-system text-[9px] tracking-wider uppercase border px-2 py-0.5 ${style.color}`}>
             {style.label}
           </span>
@@ -64,19 +64,14 @@ export default async function ConfirmedFactsPage() {
             {SOURCE_TYPE_LABELS[fact.source_type] ?? fact.source_type}
           </span>
         </div>
-        <h3 className="font-body text-text-primary text-base mb-2">{fact.title}</h3>
-        <p className="font-body text-text-mid text-sm leading-relaxed">{fact.description}</p>
+        <h3 className="font-body text-text-primary text-base mb-2 group-hover:text-gold transition-colors">{fact.title}</h3>
+        <p className="font-body text-text-mid text-sm leading-relaxed line-clamp-3">{fact.description}</p>
         {fact.source_url && (
-          <a
-            href={fact.source_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-system text-coord-blue text-[10px] hover:underline mt-3 inline-block"
-          >
-            View source
-          </a>
+          <p className="font-system text-coord-blue text-[10px] mt-3">
+            Has source reference
+          </p>
         )}
-      </div>
+      </Link>
     );
   }
 
