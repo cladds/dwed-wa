@@ -4,9 +4,9 @@ import { readFileSync, existsSync } from "fs";
 
 // --- Config ---
 const THREAD_URL = "https://forums.frontier.co.uk/threads/the-quest-to-find-raxxla.168253";
-const PAGES_PER_RUN = 50;
-const MIN_DELAY_MS = 8000;
-const MAX_DELAY_MS = 12000;
+const PAGES_PER_RUN = parseInt(process.env.PAGES_PER_RUN ?? "500", 10);
+const MIN_DELAY_MS = parseInt(process.env.MIN_DELAY ?? "4000", 10);
+const MAX_DELAY_MS = parseInt(process.env.MAX_DELAY ?? "7000", 10);
 const MAX_RETRIES = 3;
 
 // --- Supabase ---
