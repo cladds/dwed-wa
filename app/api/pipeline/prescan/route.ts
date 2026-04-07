@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const BATCH_SIZE = 30;
-const MAX_BATCHES = 200; // Enough for ~6000 posts per request
+const MAX_BATCHES = 3; // Keep under Netlify function timeout, UI loops for continuation
 
 export async function POST(req: Request) {
   if (!ANTHROPIC_API_KEY) return NextResponse.json({ error: "ANTHROPIC_API_KEY not set" }, { status: 500 });
@@ -18,9 +18,9 @@ export async function POST(req: Request) {
     .select("id", { count: "exact", head: true })
     .eq("ai_processed", false);
 
-  // Allow caller to limit batches (for partial runs)
+  // Allow caller to limit batches (capped to avoid Netlify timeout)
   const url = new URL(req.url);
-  const maxBatches = Math.min(Number(url.searchParams.get("max") ?? MAX_BATCHES), MAX_BATCHES);
+  const maxBatches = Math.min(Number(url.searchParams.get("max") ?? MAX_BATCHES), 5);
 
   let totalProcessed = 0;
   let totalExtracted = 0;

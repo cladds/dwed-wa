@@ -28,7 +28,7 @@ export default function PipelinePage() {
 
     while (!abortRef.current) {
       pass++;
-      const res = await fetch("/api/pipeline/prescan?max=50", { method: "POST" });
+      const res = await fetch("/api/pipeline/prescan?max=3", { method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Prescan failed");
 
