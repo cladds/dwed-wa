@@ -126,9 +126,31 @@ export function GalaxyMap({ systems, zones }: GalaxyMapProps) {
       ctx.fill();
 
       if (isHovered) {
+        // Tooltip background
         ctx.font = "11px 'Courier Prime', monospace";
-        ctx.fillStyle = "#d4a854";
-        ctx.fillText(sys.name, sx + 8, sy + 4);
+        const nameWidth = ctx.measureText(sys.name).width;
+        const coordText = `${sys.x.toFixed(1)} / ${sys.y.toFixed(1)} / ${sys.z.toFixed(1)}`;
+        const coordWidth = ctx.measureText(coordText).width;
+        const tipWidth = Math.max(nameWidth, coordWidth) + 16;
+
+        ctx.fillStyle = "#0e0c08ee";
+        ctx.strokeStyle = color + "60";
+        ctx.lineWidth = 1;
+        ctx.fillRect(sx + 10, sy - 18, tipWidth, 38);
+        ctx.strokeRect(sx + 10, sy - 18, tipWidth, 38);
+
+        ctx.fillStyle = color;
+        ctx.fillText(sys.name, sx + 18, sy - 2);
+        ctx.fillStyle = "#4cc9f0";
+        ctx.font = "9px 'Courier Prime', monospace";
+        ctx.fillText(coordText, sx + 18, sy + 14);
+
+        // Glow ring
+        ctx.beginPath();
+        ctx.arc(sx, sy, 8, 0, Math.PI * 2);
+        ctx.strokeStyle = color + "40";
+        ctx.lineWidth = 1;
+        ctx.stroke();
       }
     });
   }, [camera, systems, zones, hoveredSystem, worldToScreen]);
@@ -190,6 +212,12 @@ export function GalaxyMap({ systems, zones }: GalaxyMapProps) {
     isDragging.current = false;
   };
 
+  const handleClick = (e: React.MouseEvent) => {
+    if (hoveredSystem) {
+      window.location.href = `/systems/${hoveredSystem.id}`;
+    }
+  };
+
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
     const factor = e.deltaY > 0 ? 0.9 : 1.1;
@@ -204,6 +232,7 @@ export function GalaxyMap({ systems, zones }: GalaxyMapProps) {
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
+        onClick={handleClick}
         onMouseLeave={handleMouseUp}
         onWheel={handleWheel}
       />
