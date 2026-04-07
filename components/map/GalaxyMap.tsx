@@ -22,9 +22,20 @@ interface MapZone {
   type: string;
 }
 
+interface FactPoint {
+  id: string;
+  title: string;
+  status: string;
+  systemName: string;
+  x: number;
+  y: number;
+  z: number;
+}
+
 interface GalaxyMapProps {
   systems: SystemPoint[];
   zones: MapZone[];
+  facts?: FactPoint[];
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -37,10 +48,18 @@ const STATUS_COLORS: Record<string, string> = {
   cold: "#5a6a7a",
 };
 
-export function GalaxyMap({ systems, zones }: GalaxyMapProps) {
+const FACT_STATUS_COLORS: Record<string, string> = {
+  confirmed: "#2ecc71",
+  debunked: "#e74c3c",
+  rumour: "#5a6a7a",
+  unconfirmed: "#ff8c00",
+};
+
+export function GalaxyMap({ systems, zones, facts = [] }: GalaxyMapProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [camera, setCamera] = useState({ x: 0, y: 0, zoom: 0.5 });
   const [hoveredSystem, setHoveredSystem] = useState<SystemPoint | null>(null);
+  const [hoveredFact, setHoveredFact] = useState<FactPoint | null>(null);
   const isDragging = useRef(false);
   const lastMouse = useRef({ x: 0, y: 0 });
 
@@ -153,7 +172,60 @@ export function GalaxyMap({ systems, zones }: GalaxyMapProps) {
         ctx.stroke();
       }
     });
-  }, [camera, systems, zones, hoveredSystem, worldToScreen]);
+
+    // Facts as diamond markers
+    facts.forEach((fact) => {
+      const { sx, sy } = worldToScreen(fact.x, fact.z);
+      const color = FACT_STATUS_COLORS[fact.status] ?? "#2ecc71";
+      const isHovered = hoveredFact?.id === fact.id && hoveredFact?.systemName === fact.systemName;
+      const size = isHovered ? 7 : 5;
+
+      // Diamond shape
+      ctx.beginPath();
+      ctx.moveTo(sx, sy - size);
+      ctx.lineTo(sx + size, sy);
+      ctx.lineTo(sx, sy + size);
+      ctx.lineTo(sx - size, sy);
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.strokeStyle = "#0a0908";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      if (isHovered) {
+        ctx.font = "11px 'Courier Prime', monospace";
+        const titleText = fact.title.length > 40 ? fact.title.substring(0, 38) + "..." : fact.title;
+        const nameWidth = ctx.measureText(titleText).width;
+        const sysText = fact.systemName;
+        const sysWidth = ctx.measureText(sysText).width;
+        const statusText = fact.status.toUpperCase();
+        const statusWidth = ctx.measureText(statusText).width;
+        const tipWidth = Math.max(nameWidth, sysWidth, statusWidth) + 16;
+
+        ctx.fillStyle = "#0e0c08ee";
+        ctx.strokeStyle = color + "60";
+        ctx.lineWidth = 1;
+        ctx.fillRect(sx + 12, sy - 24, tipWidth, 52);
+        ctx.strokeRect(sx + 12, sy - 24, tipWidth, 52);
+
+        ctx.fillStyle = color;
+        ctx.fillText(titleText, sx + 20, sy - 8);
+        ctx.fillStyle = "#4cc9f0";
+        ctx.font = "9px 'Courier Prime', monospace";
+        ctx.fillText(sysText, sx + 20, sy + 6);
+        ctx.fillStyle = color + "aa";
+        ctx.fillText(statusText, sx + 20, sy + 20);
+
+        // Glow ring
+        ctx.beginPath();
+        ctx.arc(sx, sy, 10, 0, Math.PI * 2);
+        ctx.strokeStyle = color + "40";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+    });
+  }, [camera, systems, zones, facts, hoveredSystem, hoveredFact, worldToScreen]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -196,16 +268,32 @@ export function GalaxyMap({ systems, zones }: GalaxyMapProps) {
     const my = e.clientY - rect.top;
 
     let found: SystemPoint | null = null;
-    for (const sys of systems) {
-      const { sx, sy } = worldToScreen(sys.x, sys.z);
-      const dist = Math.sqrt((mx - sx) ** 2 + (my - sy) ** 2);
-      if (dist < 8) {
-        found = sys;
+    let foundFact: FactPoint | null = null;
+
+    // Check facts first (diamonds are more prominent)
+    for (const fact of facts) {
+      const { sx: fsx, sy: fsy } = worldToScreen(fact.x, fact.z);
+      const dist = Math.sqrt((mx - fsx) ** 2 + (my - fsy) ** 2);
+      if (dist < 10) {
+        foundFact = fact;
         break;
       }
     }
+
+    if (!foundFact) {
+      for (const sys of systems) {
+        const { sx, sy } = worldToScreen(sys.x, sys.z);
+        const dist = Math.sqrt((mx - sx) ** 2 + (my - sy) ** 2);
+        if (dist < 8) {
+          found = sys;
+          break;
+        }
+      }
+    }
+
     setHoveredSystem(found);
-    canvas.style.cursor = found ? "pointer" : isDragging.current ? "grabbing" : "grab";
+    setHoveredFact(foundFact);
+    canvas.style.cursor = (found || foundFact) ? "pointer" : isDragging.current ? "grabbing" : "grab";
   };
 
   const handleMouseUp = () => {
@@ -213,8 +301,9 @@ export function GalaxyMap({ systems, zones }: GalaxyMapProps) {
   };
 
   const handleClick = () => {
-    if (hoveredSystem) {
-      // Search for theories mentioning this system
+    if (hoveredFact) {
+      window.location.href = `/codex/facts`;
+    } else if (hoveredSystem) {
       window.location.href = `/theories?q=${encodeURIComponent(hoveredSystem.name)}`;
     }
   };
@@ -238,15 +327,26 @@ export function GalaxyMap({ systems, zones }: GalaxyMapProps) {
         onWheel={handleWheel}
       />
       <div className="absolute bottom-4 left-4 bg-bg-card/90 border border-border p-3 space-y-1.5">
-        <p className="font-ui text-text-faint text-[9px] tracking-[0.2em] uppercase mb-2">Legend</p>
+        <p className="font-ui text-text-faint text-[9px] tracking-[0.2em] uppercase mb-2">Theories</p>
         {Object.entries(STATUS_COLORS).map(([status, color]) => (
           <div key={status} className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5" style={{ backgroundColor: color }} />
+            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} />
             <span className="font-system text-text-dim text-[10px]">
               {status.replace(/_/g, " ")}
             </span>
           </div>
         ))}
+        {facts.length > 0 && (
+          <>
+            <p className="font-ui text-text-faint text-[9px] tracking-[0.2em] uppercase mt-3 mb-1">Facts</p>
+            {Object.entries(FACT_STATUS_COLORS).map(([status, color]) => (
+              <div key={status} className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rotate-45" style={{ backgroundColor: color }} />
+                <span className="font-system text-text-dim text-[10px]">{status}</span>
+              </div>
+            ))}
+          </>
+        )}
       </div>
       <div className="absolute top-4 right-4 bg-bg-card/90 border border-border px-3 py-2">
         <p className="font-system text-coord-blue text-[10px]">

@@ -36,7 +36,28 @@ const STATUS_COLORS: Record<string, string> = {
 
 const CARD_W = 220;
 const CARD_H = 80;
+const FACT_W = 200;
+const FACT_H = 60;
 const STRING_COLOR = "#cc2222";
+
+const FACT_STATUS_COLORS: Record<string, string> = {
+  confirmed: "#2ecc71",
+  debunked: "#e74c3c",
+  rumour: "#5a6a7a",
+  unconfirmed: "#ff8c00",
+};
+
+interface FactNode {
+  id: string;
+  title: string;
+  status: string;
+  sourcePerson: string | null;
+  sourceType: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
 
 interface CorkboardProps {
   theories: Array<{
@@ -54,10 +75,17 @@ interface CorkboardProps {
     theory_b_id: string;
     reason: string;
   }>;
+  facts: Array<{
+    id: string;
+    title: string;
+    status: string;
+    source_person: string | null;
+    source_type: string;
+  }>;
   canEdit: boolean;
 }
 
-export function Corkboard({ theories, links, canEdit }: CorkboardProps) {
+export function Corkboard({ theories, links, facts, canEdit }: CorkboardProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [supabase] = useState(() => createClient());
 
@@ -79,12 +107,30 @@ export function Corkboard({ theories, links, canEdit }: CorkboardProps) {
     }));
   });
 
+  // Position fact nodes in a column to the right
+  const [factNodes, setFactNodes] = useState<FactNode[]>(() => {
+    const theoryCols = Math.ceil(Math.sqrt(theories.length));
+    const offsetX = 80 + theoryCols * (CARD_W + 60) + 100;
+    return facts.map((f, i) => ({
+      id: f.id,
+      title: f.title,
+      status: f.status,
+      sourcePerson: f.source_person,
+      sourceType: f.source_type,
+      x: offsetX,
+      y: 80 + i * (FACT_H + 20),
+      w: FACT_W,
+      h: FACT_H,
+    }));
+  });
+
   const [theoryLinks, setTheoryLinks] = useState<TheoryLink[]>(
     links.map(l => ({ id: l.id, theoryAId: l.theory_a_id, theoryBId: l.theory_b_id, reason: l.reason }))
   );
 
   const [camera, setCamera] = useState({ x: 0, y: 0, zoom: 1 });
   const [dragging, setDragging] = useState<string | null>(null);
+  const [draggingFact, setDraggingFact] = useState<string | null>(null);
   const [panning, setPanning] = useState(false);
   const [hoveredLink, setHoveredLink] = useState<TheoryLink | null>(null);
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
@@ -243,7 +289,62 @@ export function Corkboard({ theories, links, canEdit }: CorkboardProps) {
       ctx.lineWidth = 0.5;
       ctx.stroke();
     }
-  }, [nodes, theoryLinks, camera, worldToScreen, hoveredLink, hoveredNode, linking]);
+    // Draw fact cards (distinct style)
+    for (const fact of factNodes) {
+      const { sx, sy } = worldToScreen(fact.x, fact.y);
+      const w = fact.w * camera.zoom;
+      const h = fact.h * camera.zoom;
+      const color = FACT_STATUS_COLORS[fact.status] ?? "#2ecc71";
+
+      // Card shadow
+      ctx.fillStyle = "#00000030";
+      ctx.fillRect(sx + 2, sy + 2, w, h);
+
+      // Card background - darker, dashed border for facts
+      ctx.fillStyle = "#0a0c08";
+      ctx.fillRect(sx, sy, w, h);
+
+      // Status bar top
+      ctx.fillStyle = color;
+      ctx.fillRect(sx, sy, w, 2 * camera.zoom);
+
+      // Dashed border
+      ctx.strokeStyle = color + "60";
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 3]);
+      ctx.strokeRect(sx, sy, w, h);
+      ctx.setLineDash([]);
+
+      // Diamond icon
+      const dx = sx + 8 * camera.zoom;
+      const dy = sy + 14 * camera.zoom;
+      const ds = 4 * camera.zoom;
+      ctx.beginPath();
+      ctx.moveTo(dx, dy - ds);
+      ctx.lineTo(dx + ds, dy);
+      ctx.lineTo(dx, dy + ds);
+      ctx.lineTo(dx - ds, dy);
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+
+      // Title
+      ctx.font = `${Math.max(10 * camera.zoom, 8)}px 'EB Garamond', serif`;
+      ctx.fillStyle = color;
+      const factTitle = fact.title.length > 26 ? fact.title.substring(0, 24) + "..." : fact.title;
+      ctx.fillText(factTitle, sx + 18 * camera.zoom, sy + 18 * camera.zoom);
+
+      // Source
+      ctx.font = `${Math.max(8 * camera.zoom, 7)}px 'Courier Prime', monospace`;
+      ctx.fillStyle = "#5a6a5a";
+      const sourceLabel = fact.sourcePerson ? `${fact.sourceType.toUpperCase()} | ${fact.sourcePerson}` : fact.sourceType.toUpperCase();
+      ctx.fillText(sourceLabel, sx + 8 * camera.zoom, sy + 34 * camera.zoom);
+
+      // Status
+      ctx.fillStyle = color + "80";
+      ctx.fillText(fact.status.toUpperCase(), sx + 8 * camera.zoom, sy + 48 * camera.zoom);
+    }
+  }, [nodes, factNodes, theoryLinks, camera, worldToScreen, hoveredLink, hoveredNode, linking]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -264,6 +365,15 @@ export function Corkboard({ theories, links, canEdit }: CorkboardProps) {
     const { wx, wy } = screenToWorld(mx, my);
     for (let i = nodes.length - 1; i >= 0; i--) {
       const n = nodes[i];
+      if (wx >= n.x && wx <= n.x + n.w && wy >= n.y && wy <= n.y + n.h) return n;
+    }
+    return null;
+  }
+
+  function findFactAt(mx: number, my: number): FactNode | null {
+    const { wx, wy } = screenToWorld(mx, my);
+    for (let i = factNodes.length - 1; i >= 0; i--) {
+      const n = factNodes[i];
       if (wx >= n.x && wx <= n.x + n.w && wy >= n.y && wy <= n.y + n.h) return n;
     }
     return null;
@@ -298,9 +408,10 @@ export function Corkboard({ theories, links, canEdit }: CorkboardProps) {
     lastMouse.current = { x: mx, y: my };
 
     const node = findNodeAt(mx, my);
+    const factNode = !node ? findFactAt(mx, my) : null;
+
     if (node) {
       if (linking) {
-        // Complete the link
         if (node.id !== linking) {
           setLinkTarget(node.id);
           setShowLinkDialog(true);
@@ -308,11 +419,12 @@ export function Corkboard({ theories, links, canEdit }: CorkboardProps) {
         return;
       }
       if (e.shiftKey && canEdit) {
-        // Start linking
         setLinking(node.id);
         return;
       }
       setDragging(node.id);
+    } else if (factNode) {
+      setDraggingFact(factNode.id);
     } else {
       if (linking) {
         setLinking(null);
@@ -332,6 +444,10 @@ export function Corkboard({ theories, links, canEdit }: CorkboardProps) {
       const dx = (mx - lastMouse.current.x) / camera.zoom;
       const dy = (my - lastMouse.current.y) / camera.zoom;
       setNodes(prev => prev.map(n => n.id === dragging ? { ...n, x: n.x + dx, y: n.y + dy } : n));
+    } else if (draggingFact) {
+      const dx = (mx - lastMouse.current.x) / camera.zoom;
+      const dy = (my - lastMouse.current.y) / camera.zoom;
+      setFactNodes(prev => prev.map(n => n.id === draggingFact ? { ...n, x: n.x + dx, y: n.y + dy } : n));
     } else if (panning) {
       const dx = (mx - lastMouse.current.x) / camera.zoom;
       const dy = (my - lastMouse.current.y) / camera.zoom;
@@ -352,6 +468,7 @@ export function Corkboard({ theories, links, canEdit }: CorkboardProps) {
 
   const handleMouseUp = () => {
     setDragging(null);
+    setDraggingFact(null);
     setPanning(false);
   };
 
@@ -363,6 +480,11 @@ export function Corkboard({ theories, links, canEdit }: CorkboardProps) {
     const node = findNodeAt(mx, my);
     if (node) {
       window.location.href = `/theories/${node.slug}`;
+      return;
+    }
+    const fact = findFactAt(mx, my);
+    if (fact) {
+      window.location.href = `/codex/facts`;
     }
   };
 
@@ -422,7 +544,7 @@ export function Corkboard({ theories, links, canEdit }: CorkboardProps) {
       {/* Zoom indicator */}
       <div className="absolute top-4 right-4 bg-bg-card/90 border border-border px-3 py-2">
         <p className="font-system text-coord-blue text-[10px]">
-          {nodes.length} theories | {theoryLinks.length} links | {(camera.zoom * 100).toFixed(0)}%
+          {nodes.length} theories | {factNodes.length} facts | {theoryLinks.length} links | {(camera.zoom * 100).toFixed(0)}%
         </p>
       </div>
 

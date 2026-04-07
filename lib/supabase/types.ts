@@ -623,6 +623,7 @@ export interface Database {
           source_url: string | null;
           source_date: string | null;
           status: "confirmed" | "unconfirmed" | "debunked" | "rumour";
+          systems_mentioned: string[];
           sort_order: number;
           created_at: string;
           updated_at: string;
@@ -635,6 +636,7 @@ export interface Database {
           source_url?: string | null;
           source_date?: string | null;
           status?: string;
+          systems_mentioned?: string[];
           sort_order?: number;
           id?: string;
           created_at?: string;
@@ -648,6 +650,7 @@ export interface Database {
           source_url?: string | null;
           source_date?: string | null;
           status?: string;
+          systems_mentioned?: string[];
           sort_order?: number;
           id?: string;
           created_at?: string;

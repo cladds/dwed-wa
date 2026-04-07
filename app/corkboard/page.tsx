@@ -18,6 +18,12 @@ export default async function CorkboardPage() {
     .from("theory_links")
     .select("id, theory_a_id, theory_b_id, reason");
 
+  // Fetch confirmed facts for corkboard display
+  const { data: facts } = await supabase
+    .from("confirmed_facts")
+    .select("id, title, status, source_person, source_type")
+    .order("sort_order", { ascending: true });
+
   // Check if user can edit
   const { data: { user } } = await supabase.auth.getUser();
   let canEdit = false;
@@ -44,7 +50,7 @@ export default async function CorkboardPage() {
         </div>
       </div>
       <div className="relative border border-border bg-bg-card" style={{ height: "calc(100vh - 160px)" }}>
-        <Corkboard theories={theories ?? []} links={links ?? []} canEdit={canEdit} />
+        <Corkboard theories={theories ?? []} links={links ?? []} facts={facts ?? []} canEdit={canEdit} />
       </div>
     </div>
   );

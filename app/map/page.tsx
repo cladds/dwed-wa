@@ -21,6 +21,51 @@ export default async function MapPage() {
     .from("map_zones")
     .select("id, name, centre_x, centre_y, centre_z, radius_ly, colour, type");
 
+  // Fetch confirmed facts that mention systems
+  const { data: factsWithSystems } = await supabase
+    .from("confirmed_facts")
+    .select("id, title, status, systems_mentioned")
+    .not("systems_mentioned", "eq", "{}");
+
+  // Resolve fact systems to coordinates via system_cache
+  const factSystemNames = new Set<string>();
+  for (const f of factsWithSystems ?? []) {
+    for (const sys of f.systems_mentioned ?? []) {
+      factSystemNames.add(sys);
+    }
+  }
+
+  const { data: factSystemCoords } = factSystemNames.size > 0
+    ? await supabase
+        .from("system_cache")
+        .select("system_name, coord_x, coord_y, coord_z")
+        .in("system_name", Array.from(factSystemNames))
+    : { data: [] };
+
+  const coordMap = new Map<string, { x: number; y: number; z: number }>();
+  for (const c of factSystemCoords ?? []) {
+    if (c.coord_x != null) {
+      coordMap.set(c.system_name.toLowerCase(), { x: c.coord_x, y: c.coord_y!, z: c.coord_z! });
+    }
+  }
+
+  const factPoints = (factsWithSystems ?? []).flatMap(f =>
+    (f.systems_mentioned ?? [])
+      .filter(sys => coordMap.has(sys.toLowerCase()))
+      .map(sys => {
+        const coords = coordMap.get(sys.toLowerCase())!;
+        return {
+          id: f.id,
+          title: f.title,
+          status: f.status,
+          systemName: sys,
+          x: coords.x,
+          y: coords.y,
+          z: coords.z,
+        };
+      })
+  );
+
   const ticketSystems = (tickets ?? []).map((t) => ({
     id: t.id,
     name: t.system_name,
@@ -67,7 +112,7 @@ export default async function MapPage() {
         </p>
       </div>
       <div className="border border-border bg-bg-card" style={{ height: "calc(100vh - 160px)" }}>
-        <GalaxyMap systems={systems} zones={zones} />
+        <GalaxyMap systems={systems} zones={zones} facts={factPoints} />
       </div>
     </div>
   );
