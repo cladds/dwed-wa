@@ -60,16 +60,17 @@ export default async function Home() {
     { count: openLeads },
     { count: underInvestigation },
     { count: systemCount },
-    { count: evidenceCount },
+    { count: theoryCount },
     { count: forumPosts },
     { count: extractedLeads },
+    { count: systemsCached },
   ] = await Promise.all([
-    supabase.from("dossiers").select("id", { count: "exact", head: true }).eq("status", "open_lead"),
-    supabase.from("dossiers").select("id", { count: "exact", head: true }).eq("status", "under_investigation"),
-    supabase.from("system_tickets").select("id", { count: "exact", head: true }),
-    supabase.from("evidence").select("id", { count: "exact", head: true }),
+    supabase.from("theories").select("id", { count: "exact", head: true }).eq("status", "open_lead"),
+    supabase.from("theories").select("id", { count: "exact", head: true }).eq("status", "under_investigation"),
+    supabase.from("theories").select("id", { count: "exact", head: true }),
     supabase.from("forum_posts").select("id", { count: "exact", head: true }),
-    supabase.from("extracted_leads").select("id", { count: "exact", head: true }).eq("status", "unreviewed"),
+    supabase.from("extracted_leads").select("id", { count: "exact", head: true }),
+    supabase.from("system_cache").select("id", { count: "exact", head: true }),
   ]);
 
   // Recent dossiers
@@ -124,10 +125,10 @@ export default async function Home() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard label="Open Leads" value={String(openLeads ?? 0)} sub="awaiting review" href="/dossiers" />
-        <StatCard label="Under Investigation" value={String(underInvestigation ?? 0)} sub="active operations" href="/dossiers" />
-        <StatCard label="Coordinates Tracked" value={String(systemCount ?? 0)} sub="star systems" href="/systems" />
-        <StatCard label="Forum Archive" value={String(forumPosts ?? 0)} sub={`${extractedLeads ?? 0} leads extracted`} href="/admin/archive" />
+        <StatCard label="Open Theories" value={String(openLeads ?? 0)} sub="awaiting investigation" href="/theories" />
+        <StatCard label="All Theories" value={String(theoryCount ?? 0)} sub={`${extractedLeads ?? 0} leads extracted`} href="/theories" />
+        <StatCard label="Systems Mapped" value={String(systemsCached ?? 0)} sub="on galaxy chart" href="/map" />
+        <StatCard label="Forum Archive" value={String(forumPosts ?? 0)} sub="posts scraped" href="/admin/archive" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -228,8 +229,8 @@ export default async function Home() {
                 <span className="font-system text-gold text-xs">{extractedLeads ?? 0}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="font-system text-text-dim text-xs">Evidence items</span>
-                <span className="font-system text-text-primary text-xs">{evidenceCount ?? 0}</span>
+                <span className="font-system text-text-dim text-xs">Systems mapped</span>
+                <span className="font-system text-coord-blue text-xs">{systemsCached ?? 0}</span>
               </div>
             </div>
           </div>
