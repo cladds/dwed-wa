@@ -2,13 +2,6 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 
-const STATUS_STYLES: Record<string, { label: string; color: string; borderColor: string }> = {
-  confirmed: { label: "Confirmed", color: "border-status-success text-status-success", borderColor: "border-status-success/30" },
-  unconfirmed: { label: "Unconfirmed", color: "border-gold text-gold", borderColor: "border-gold/30" },
-  debunked: { label: "Debunked", color: "border-status-danger text-status-danger", borderColor: "border-status-danger/30" },
-  rumour: { label: "Rumour", color: "border-text-dim text-text-dim", borderColor: "border-border" },
-};
-
 const SOURCE_TYPE_LABELS: Record<string, string> = {
   developer: "Developer Statements",
   in_game: "In-Game Sources",

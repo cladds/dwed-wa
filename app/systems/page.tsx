@@ -6,9 +6,9 @@ import { formatCoords } from "@/lib/utils";
 interface SystemWithContext {
   id: string;
   system_name: string;
-  coord_x: number;
-  coord_y: number;
-  coord_z: number;
+  coord_x: number | null;
+  coord_y: number | null;
+  coord_z: number | null;
   allegiance: string | null;
   economy: string | null;
   theoryCount: number;
